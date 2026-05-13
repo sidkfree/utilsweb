@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>QR Code Generator — UtilsWeb</title>
+    <meta name="description" content="Generate a QR code from any text or URL, instantly. 100% browser, no upload, no signup.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #06B6D4, #3B82F6);">🔲</div>
+                    <div>
+                        <h1>QR Code Generator</h1>
+                        <p class="tagline">Type anything — URL, Wi-Fi password, plain text. Get a QR code you can save as PNG.</p>
+                    </div>
+                </div>
+
+                <div class="tool-form" id="qrForm">
+                    <label>Content (URL, text, Wi-Fi credentials, etc.)</label>
+                    <textarea id="content" rows="4" placeholder="https://utilsweb.net">https://utilsweb.net</textarea>
+
+                    <div class="row">
+                        <div>
+                            <label>Size (px)</label>
+                            <input type="number" id="size" value="512" min="128" max="2048" step="32">
+                        </div>
+                        <div>
+                            <label>Error correction</label>
+                            <select id="ec">
+                                <option value="L">L — Low (~7%)</option>
+                                <option value="M" selected>M — Medium (~15%)</option>
+                                <option value="Q">Q — Quartile (~25%)</option>
+                                <option value="H">H — High (~30%)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div>
+                            <label>Foreground</label>
+                            <input type="color" id="fg" value="#000000">
+                        </div>
+                        <div>
+                            <label>Background</label>
+                            <input type="color" id="bg" value="#ffffff">
+                        </div>
+                    </div>
+
+                    <button class="btn primary" id="genBtn" type="button">Generate QR</button>
+                </div>
+
+                <div id="resultBox" class="result-card" style="display:none; flex-direction:column; align-items:center; gap:18px;">
+                    <div id="qrHolder" style="background:#fff; border-radius:14px; padding:14px; max-width:100%;"></div>
+                    <a class="btn primary" id="dlBtn" download="qrcode.png">⬇ Download PNG</a>
+                </div>
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>This page runs entirely in your browser using the <a href="https://github.com/davidshimjs/qrcodejs" target="_blank" rel="noopener">qrcodejs</a> library. Nothing is sent to any server — you can disconnect from the internet after the page loads and it still works. The PNG download is generated locally from the canvas.</p>
+                    <p style="margin-top:12px;"><strong>Wi-Fi tip:</strong> to generate a QR that auto-joins Wi-Fi, paste <code>WIFI:T:WPA;S:NetworkName;P:Password;;</code> in the content field.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        const content = $("content"), size = $("size"), ec = $("ec"), fg = $("fg"), bg = $("bg");
+        const holder = $("qrHolder"), resultBox = $("resultBox"), errorBox = $("errorBox");
+        const dlBtn = $("dlBtn"), genBtn = $("genBtn");
+
+        function ecLevel(letter) {
+            if (!window.QRCode) return 1; // fallback
+            const L = QRCode.CorrectLevel || {};
+            return L[letter] !== undefined ? L[letter] : (L.M !== undefined ? L.M : 1);
+        }
+
+        function generate() {
+            const text = content.value.trim();
+            errorBox.style.display = "none";
+            if (!text) { showError("Type something to encode."); return; }
+            if (!window.QRCode) { showError("QR library still loading, retry in a second."); return; }
+
+            const px = Math.max(128, Math.min(2048, parseInt(size.value, 10) || 512));
+            holder.innerHTML = "";
+            try {
+                new QRCode(holder, {
+                    text,
+                    width: px,
+                    height: px,
+                    colorDark: fg.value,
+                    colorLight: bg.value,
+                    correctLevel: ecLevel(ec.value)
+                });
+                resultBox.style.display = "flex";
+                // After the lib draws, wait a tick then read the canvas
+                setTimeout(() => {
+                    const c = holder.querySelector("canvas");
+                    if (c) {
+                        dlBtn.href = c.toDataURL("image/png");
+                    } else {
+                        const img = holder.querySelector("img");
+                        if (img) dlBtn.href = img.src;
+                    }
+                }, 60);
+            } catch (e) {
+                showError(e.message || String(e));
+            }
+        }
+
+        function showError(msg) {
+            errorBox.textContent = "⚠ " + msg;
+            errorBox.style.display = "block";
+            resultBox.style.display = "none";
+        }
+
+        genBtn.addEventListener("click", generate);
+        [size, ec, fg, bg].forEach(el => el.addEventListener("change", generate));
+        content.addEventListener("input", () => { if (resultBox.style.display !== "none") generate(); });
+
+        function tryFirstRender(tries) {
+            if (window.QRCode) { generate(); return; }
+            if (tries > 30) return;
+            setTimeout(() => tryFirstRender(tries + 1), 100);
+        }
+        tryFirstRender(0);
+    })();
+    </script>
+</body>
+</html>

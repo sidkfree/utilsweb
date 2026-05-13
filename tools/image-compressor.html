@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Image Compressor — UtilsWeb</title>
+    <meta name="description" content="Compress JPG, PNG and WebP images right in your browser. Quality slider, optional resize, no upload.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <style>
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 14px;
+            padding: 36px 24px;
+            text-align: center;
+            color: var(--text-2);
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+            background: var(--bg-card-2);
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(6, 182, 212, 0.04);
+        }
+        .drop-zone .big { font-size: 36px; margin-bottom: 8px; }
+
+        .img-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+        .img-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .img-thumb {
+            background: #000;
+            border-radius: 10px;
+            min-height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .img-thumb img { max-width: 100%; max-height: 180px; display: block; }
+        .img-name {
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 13px;
+        }
+        .size-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-2);
+        }
+        .size-row strong { color: var(--text); }
+        .saving { color: var(--success); font-weight: 700; }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .controls label { color: var(--text-2); font-size: 12px; display: flex; justify-content: space-between; }
+        .controls .quality-val { color: var(--text); font-weight: 600; }
+        .controls input[type=range] { width: 100%; }
+        .controls select, .controls input[type=number] {
+            width: 100%;
+            background: var(--bg-card-2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font: inherit;
+        }
+        .card-actions { display: flex; gap: 8px; }
+        .card-actions .btn { flex: 1; font-size: 13px; padding: 8px 12px; }
+        .card-actions .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-2);
+        }
+        .img-remove {
+            position: absolute;
+            top: 8px; right: 8px;
+            background: rgba(0,0,0,0.6);
+            border: none;
+            color: #fff;
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .img-card .top { position: relative; }
+
+        .global-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 16px;
+            padding: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .global-bar .stat {
+            font-size: 13px;
+            color: var(--text-2);
+        }
+        .global-bar .stat strong { color: var(--text); }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F97316, #EAB308);">🗜️</div>
+                    <div>
+                        <h1>Image Compressor</h1>
+                        <p class="tagline">Shrink JPG, PNG and WebP files without uploading them. Quality slider, optional resize, before/after.</p>
+                    </div>
+                </div>
+
+                <div class="tool-form">
+                    <label>Add images</label>
+                    <div id="dropZone" class="drop-zone">
+                        <div class="big">🖼️</div>
+                        <div><strong>Drop images here</strong> or click to browse</div>
+                        <div style="font-size: 13px; margin-top: 6px;">JPG · PNG · WebP. Tweak quality, resize, and download — nothing leaves your browser.</div>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple style="display:none;">
+                </div>
+
+                <div id="globalBar" class="global-bar" style="display:none;">
+                    <button class="btn primary" id="compressAll" type="button">Compress all</button>
+                    <button class="btn btn-ghost" id="downloadAll" type="button" disabled>Download all</button>
+                    <span class="stat" id="globalStats"></span>
+                    <button class="btn btn-ghost" id="clearAll" type="button" style="margin-left:auto;">Clear list</button>
+                </div>
+
+                <div class="img-grid" id="imgGrid"></div>
+
+                <div id="errorBox" class="error-card" style="display:none; margin-top:18px;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>Each image is decoded into a hidden <code>&lt;canvas&gt;</code> in your browser, optionally resized, and re-encoded with the native <code>canvas.toBlob()</code> API at the quality you pick. Nothing is uploaded — you can disconnect from the internet after the page loads and it still works. PNG is lossless so the quality slider has no effect for PNG output; switch to JPG or WebP to get real size savings.</p>
+                    <p style="margin-top:12px;"><strong>Tip:</strong> WebP usually gives the smallest file at a given quality. JPG is the safest if you need to send the file to old software. PNG only makes sense if the image has transparency you must preserve.</p>
+                    <p style="margin-top:12px;"><strong>Scope:</strong> EXIF metadata (camera GPS, date) is stripped during re-encoding — that's actually a privacy upside. Animated GIFs are not supported (only the first frame would survive).</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        const fileInput = $("fileInput"), dropZone = $("dropZone"), grid = $("imgGrid");
+        const globalBar = $("globalBar"), compressAllBtn = $("compressAll"), downloadAllBtn = $("downloadAll");
+        const globalStats = $("globalStats"), clearAllBtn = $("clearAll"), errorBox = $("errorBox");
+
+        const items = []; // { id, file, src(blobURL), w, h, quality, maxW, format, compressed: { blob, url, name } }
+        let nextId = 1;
+
+        function setError(m) { errorBox.textContent = "⚠ " + m; errorBox.style.display = "block"; }
+        function clearError() { errorBox.style.display = "none"; }
+
+        function humanSize(bytes) {
+            if (bytes < 1024) return bytes + " B";
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+            return (bytes / 1024 / 1024).toFixed(2) + " MB";
+        }
+        function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+
+        function detectFormat(file) {
+            if (/\.webp$/i.test(file.name) || file.type === "image/webp") return "webp";
+            if (/\.png$/i.test(file.name) || file.type === "image/png") return "png";
+            return "jpeg";
+        }
+
+        async function addFiles(fileList) {
+            clearError();
+            const arr = Array.from(fileList);
+            const accepted = arr.filter(f => /^image\/(jpeg|png|webp)$/.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name));
+            if (accepted.length === 0) { setError("Drop JPG, PNG or WebP files."); return; }
+            for (const f of accepted) {
+                try {
+                    const src = URL.createObjectURL(f);
+                    const dims = await new Promise((res, rej) => {
+                        const img = new Image();
+                        img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight });
+                        img.onerror = () => rej(new Error("decode failed"));
+                        img.src = src;
+                    });
+                    items.push({
+                        id: nextId++,
+                        file: f,
+                        src,
+                        w: dims.w, h: dims.h,
+                        quality: 0.8,
+                        maxW: "",
+                        format: detectFormat(f),
+                        compressed: null,
+                    });
+                } catch (e) {
+                    setError(`"${f.name}" could not be decoded: ${e.message || e}`);
+                }
+            }
+            render();
+        }
+
+        function render() {
+            grid.innerHTML = "";
+            globalBar.style.display = items.length > 0 ? "flex" : "none";
+            if (items.length === 0) { downloadAllBtn.disabled = true; globalStats.textContent = ""; return; }
+            for (const it of items) {
+                const card = document.createElement("div");
+                card.className = "img-card";
+                const compInfo = it.compressed
+                    ? `<div class="size-row"><span>Compressed: <strong>${humanSize(it.compressed.blob.size)}</strong></span>
+                       <span class="saving">−${Math.max(0, Math.round(100 * (1 - it.compressed.blob.size / it.file.size)))}%</span></div>`
+                    : "";
+                card.innerHTML = `
+                    <div class="top">
+                        <div class="img-thumb"><img src="${it.src}" alt=""></div>
+                        <button class="img-remove" title="Remove" data-action="remove">✕</button>
+                    </div>
+                    <div class="img-name" title="${escapeHtml(it.file.name)}">${escapeHtml(it.file.name)}</div>
+                    <div class="size-row">
+                        <span>Original: <strong>${humanSize(it.file.size)}</strong></span>
+                        <span>${it.w} × ${it.h}px</span>
+                    </div>
+                    ${compInfo}
+                    <div class="controls">
+                        <label>Quality <span class="quality-val">${(it.quality * 100).toFixed(0)}%</span></label>
+                        <input type="range" min="10" max="100" step="5" value="${it.quality * 100}" data-action="quality">
+                        <label>Max width (px, optional)</label>
+                        <input type="number" min="50" max="10000" placeholder="${it.w}" value="${it.maxW}" data-action="maxw">
+                        <label>Output format</label>
+                        <select data-action="format">
+                            <option value="jpeg" ${it.format==="jpeg"?"selected":""}>JPG</option>
+                            <option value="webp" ${it.format==="webp"?"selected":""}>WebP</option>
+                            <option value="png" ${it.format==="png"?"selected":""}>PNG (lossless)</option>
+                        </select>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn primary" data-action="compress">Compress</button>
+                        ${it.compressed ? `<a class="btn btn-ghost" href="${it.compressed.url}" download="${it.compressed.name}">⬇ Download</a>` : ""}
+                    </div>
+                `;
+                card.querySelector("[data-action=remove]").addEventListener("click", () => {
+                    URL.revokeObjectURL(it.src);
+                    if (it.compressed) URL.revokeObjectURL(it.compressed.url);
+                    const i = items.findIndex(x => x.id === it.id);
+                    if (i >= 0) items.splice(i, 1);
+                    render();
+                });
+                card.querySelector("[data-action=quality]").addEventListener("input", (e) => {
+                    it.quality = parseInt(e.target.value, 10) / 100;
+                    card.querySelector(".quality-val").textContent = (it.quality * 100).toFixed(0) + "%";
+                });
+                card.querySelector("[data-action=maxw]").addEventListener("input", (e) => {
+                    it.maxW = e.target.value;
+                });
+                card.querySelector("[data-action=format]").addEventListener("change", (e) => {
+                    it.format = e.target.value;
+                });
+                card.querySelector("[data-action=compress]").addEventListener("click", async () => {
+                    await compressOne(it);
+                    render();
+                });
+                grid.appendChild(card);
+            }
+            // Global stats
+            const done = items.filter(x => x.compressed);
+            if (done.length > 0) {
+                const sumBefore = done.reduce((s, x) => s + x.file.size, 0);
+                const sumAfter = done.reduce((s, x) => s + x.compressed.blob.size, 0);
+                const pct = sumBefore > 0 ? Math.max(0, Math.round(100 * (1 - sumAfter / sumBefore))) : 0;
+                globalStats.textContent = `Compressed ${done.length}/${items.length} · ${humanSize(sumBefore)} → ${humanSize(sumAfter)} (−${pct}%)`;
+                downloadAllBtn.disabled = false;
+            } else {
+                globalStats.textContent = `${items.length} image${items.length===1?"":"s"} queued`;
+                downloadAllBtn.disabled = true;
+            }
+        }
+
+        async function compressOne(it) {
+            try {
+                const img = await new Promise((res, rej) => {
+                    const i = new Image();
+                    i.onload = () => res(i);
+                    i.onerror = () => rej(new Error("decode failed"));
+                    i.src = it.src;
+                });
+                const maxW = parseInt(it.maxW, 10);
+                let outW = it.w, outH = it.h;
+                if (maxW && maxW > 0 && maxW < it.w) {
+                    outW = maxW;
+                    outH = Math.round(it.h * (maxW / it.w));
+                }
+                const canvas = document.createElement("canvas");
+                canvas.width = outW;
+                canvas.height = outH;
+                const ctx = canvas.getContext("2d");
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = "high";
+                ctx.drawImage(img, 0, 0, outW, outH);
+                const mime = `image/${it.format}`;
+                const blob = await new Promise((res, rej) => {
+                    canvas.toBlob((b) => b ? res(b) : rej(new Error("encode failed — try another format")), mime, it.format === "png" ? undefined : it.quality);
+                });
+                if (it.compressed) URL.revokeObjectURL(it.compressed.url);
+                const url = URL.createObjectURL(blob);
+                const base = it.file.name.replace(/\.[^.]+$/, "");
+                const ext = it.format === "jpeg" ? "jpg" : it.format;
+                const name = `${base}-compressed.${ext}`;
+                it.compressed = { blob, url, name };
+            } catch (e) {
+                setError(`"${it.file.name}" — ${e.message || e}`);
+            }
+        }
+
+        // Drop zone wiring
+        dropZone.addEventListener("click", () => fileInput.click());
+        dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+        dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZone.classList.remove("dragover");
+            if (e.dataTransfer.files && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener("change", () => { if (fileInput.files) addFiles(fileInput.files); fileInput.value = ""; });
+
+        compressAllBtn.addEventListener("click", async () => {
+            clearError();
+            for (const it of items) await compressOne(it);
+            render();
+        });
+        downloadAllBtn.addEventListener("click", () => {
+            // Trigger sequential per-file downloads. Browsers may prompt to allow multiple downloads.
+            for (const it of items) {
+                if (!it.compressed) continue;
+                const a = document.createElement("a");
+                a.href = it.compressed.url;
+                a.download = it.compressed.name;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }
+        });
+        clearAllBtn.addEventListener("click", () => {
+            for (const it of items) {
+                URL.revokeObjectURL(it.src);
+                if (it.compressed) URL.revokeObjectURL(it.compressed.url);
+            }
+            items.length = 0;
+            render();
+        });
+    })();
+    </script>
+</body>
+</html>

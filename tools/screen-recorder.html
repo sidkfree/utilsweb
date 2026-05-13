@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Screen Recorder — UtilsWeb</title>
+    <meta name="description" content="Record your screen, tab or window with optional mic audio. Export as WebM. Native browser APIs, no extension, no upload.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <style>
+        .video-stage {
+            background: #000;
+            border-radius: 14px;
+            overflow: hidden;
+            margin-top: 14px;
+            border: 1px solid var(--border);
+        }
+        .video-stage video { display: block; width: 100%; max-height: 520px; background: #000; }
+        .rec-bar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 14px;
+            padding: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+        .rec-status { font-weight: 600; font-size: 13px; color: var(--text-2); }
+        .rec-status.live { color: var(--error); }
+        .rec-status .dot {
+            display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--text-3); margin-right: 8px;
+        }
+        .rec-status.live .dot { background: var(--error); animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .rec-clock { font-family: monospace; font-size: 16px; color: var(--text); }
+        .options {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            color: var(--text-2);
+            font-size: 14px;
+        }
+        .options label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #DC2626, #F97316);">🎬</div>
+                    <div>
+                        <h1>Screen Recorder</h1>
+                        <p class="tagline">Capture your screen, a tab or a window — with optional mic audio. Export as WebM. No extension, no upload.</p>
+                    </div>
+                </div>
+
+                <div class="tool-form">
+                    <div class="options">
+                        <label><input type="checkbox" id="micOpt"> Include microphone</label>
+                        <label><input type="checkbox" id="systemAudioOpt" checked> Include system audio (if available)</label>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top: 14px; flex-wrap:wrap;">
+                        <button class="btn primary" id="startBtn" type="button">● Start recording</button>
+                        <button class="btn primary" id="stopBtn" type="button" disabled style="background: var(--error);">■ Stop</button>
+                    </div>
+                </div>
+
+                <div class="rec-bar">
+                    <div class="rec-status" id="recStatus"><span class="dot"></span><span id="recStatusText">Idle</span></div>
+                    <div class="rec-clock" id="recClock">00:00</div>
+                </div>
+
+                <div id="videoStage" class="video-stage" style="display:none;">
+                    <video id="videoPlayer" controls></video>
+                </div>
+
+                <div id="resultBox" class="result-card" style="display:none; flex-direction:column; align-items:flex-start; gap:14px; margin-top: 14px;">
+                    <p>✓ Recording ready. <span id="resultMeta" style="color: var(--text-2); font-size: 13px;"></span></p>
+                    <a class="btn primary" id="dlBtn" download="screen-recording.webm">⬇ Download .webm</a>
+                </div>
+
+                <div id="errorBox" class="error-card" style="display:none; margin-top: 14px;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>The browser's <code>getDisplayMedia()</code> API asks the OS to capture a screen, window or tab. That live stream is piped into <code>MediaRecorder</code>, which encodes WebM (VP9 or VP8 depending on browser) directly into a blob in memory. Nothing is uploaded — the file is yours the moment recording stops.</p>
+                    <p style="margin-top:12px;"><strong>Audio:</strong> "system audio" is only available when you pick a Chrome <em>tab</em> source (and tick "Share tab audio" in the picker). When you pick a window or full screen, system audio is silently dropped on most OSes — that's a platform limitation, not a bug. Mic audio works in all modes.</p>
+                    <p style="margin-top:12px;"><strong>Convert to MP4?</strong> WebM is the native browser output. To convert, drop the result into our future <em>MP4 converter</em> tool, or just keep the .webm — every modern player handles it.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        const startBtn = $("startBtn"), stopBtn = $("stopBtn");
+        const micOpt = $("micOpt"), sysAudioOpt = $("systemAudioOpt");
+        const recStatus = $("recStatus"), recStatusText = $("recStatusText"), recClock = $("recClock");
+        const videoStage = $("videoStage"), videoPlayer = $("videoPlayer");
+        const resultBox = $("resultBox"), dlBtn = $("dlBtn"), resultMeta = $("resultMeta");
+        const errorBox = $("errorBox");
+
+        let recorder = null, screenStream = null, micStream = null, chunks = [], startedAt = 0, tickHandle = null;
+        let lastBlobUrl = null;
+
+        function setStatus(text, live) {
+            recStatusText.textContent = text;
+            recStatus.classList.toggle("live", !!live);
+        }
+        function setError(m) { errorBox.textContent = "⚠ " + m; errorBox.style.display = "block"; }
+        function clearError() { errorBox.style.display = "none"; }
+
+        function fmtTime(ms) {
+            const s = Math.floor(ms / 1000);
+            const mm = String(Math.floor(s / 60)).padStart(2, "0");
+            const ss = String(s % 60).padStart(2, "0");
+            return `${mm}:${ss}`;
+        }
+        function humanSize(b) {
+            if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB";
+            return (b / 1024 / 1024).toFixed(2) + " MB";
+        }
+        function pickMime() {
+            const c = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
+            for (const m of c) if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
+            return "video/webm";
+        }
+
+        function isSecureCtx() {
+            return window.isSecureContext === true;
+        }
+
+        // Show a permanent warning if we're served from an insecure origin (HTTP + non-localhost).
+        if (!isSecureCtx()) {
+            const warn = document.createElement("div");
+            warn.className = "error-card";
+            warn.style.margin = "14px 0";
+            warn.innerHTML = `⚠ <strong>Screen capture is disabled on this page.</strong> Browsers only allow it over <code>https://</code> or <code>localhost</code>. The current origin (<code>${location.origin}</code>) is an HTTP IP address — open the site over HTTPS (it will work once deployed to <code>https://utilsweb.net</code>) or via <code>http://localhost:9100</code> in dev.`;
+            const form = document.querySelector(".tool-form");
+            form.parentNode.insertBefore(warn, form);
+        }
+
+        startBtn.addEventListener("click", async () => {
+            clearError();
+            if (!isSecureCtx() || !navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+                setError("Screen capture requires HTTPS or localhost — your browser blocks getDisplayMedia on plain-HTTP IP addresses. Reopen this tool over https:// (or via http://localhost:9100 in dev).");
+                return;
+            }
+            try {
+                screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { frameRate: { ideal: 30 } },
+                    audio: !!sysAudioOpt.checked,
+                });
+            } catch (e) {
+                setError("Screen capture cancelled or not permitted: " + (e.message || e)); return;
+            }
+
+            // Combine tracks: screen video + (system audio from screenStream) + (mic if requested)
+            const tracks = screenStream.getVideoTracks().slice();
+            for (const t of screenStream.getAudioTracks()) tracks.push(t);
+
+            if (micOpt.checked) {
+                try {
+                    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    for (const t of micStream.getAudioTracks()) tracks.push(t);
+                } catch (e) {
+                    setError("Mic denied — continuing without microphone.");
+                    micStream = null;
+                }
+            }
+            const combined = new MediaStream(tracks);
+
+            // If user stops sharing via browser UI, we should auto-stop
+            screenStream.getVideoTracks()[0].addEventListener("ended", () => {
+                if (recorder && recorder.state !== "inactive") recorder.stop();
+            });
+
+            chunks = [];
+            recorder = new MediaRecorder(combined, { mimeType: pickMime() });
+            recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+            recorder.onstop = () => {
+                if (tickHandle) { clearInterval(tickHandle); tickHandle = null; }
+                if (screenStream) { for (const t of screenStream.getTracks()) t.stop(); screenStream = null; }
+                if (micStream) { for (const t of micStream.getTracks()) t.stop(); micStream = null; }
+                const blob = new Blob(chunks, { type: pickMime().split(";")[0] });
+                if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+                lastBlobUrl = URL.createObjectURL(blob);
+                videoPlayer.src = lastBlobUrl;
+                videoStage.style.display = "block";
+                dlBtn.href = lastBlobUrl;
+                dlBtn.download = `screen-recording-${new Date().toISOString().replace(/[:.]/g, "-")}.webm`;
+                resultMeta.textContent = `${humanSize(blob.size)} · ${fmtTime(Date.now() - startedAt)}`;
+                resultBox.style.display = "flex";
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                setStatus("Idle", false);
+            };
+            recorder.start(1000);
+            startedAt = Date.now();
+            setStatus("Recording", true);
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            videoStage.style.display = "none";
+            resultBox.style.display = "none";
+            tickHandle = setInterval(() => recClock.textContent = fmtTime(Date.now() - startedAt), 250);
+        });
+
+        stopBtn.addEventListener("click", () => {
+            if (recorder && recorder.state !== "inactive") recorder.stop();
+        });
+    })();
+    </script>
+</body>
+</html>

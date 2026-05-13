@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>PDF Merger — UtilsWeb</title>
+    <meta name="description" content="Combine multiple PDFs into one file in your browser. Drag to reorder, no upload, no signup.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <style>
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 14px;
+            padding: 40px 24px;
+            text-align: center;
+            color: var(--text-2);
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+            background: var(--bg-card-2);
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(6, 182, 212, 0.04);
+        }
+        .drop-zone .big {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+        .pdf-list {
+            margin-top: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .pdf-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: grab;
+            user-select: none;
+        }
+        .pdf-row.dragging { opacity: 0.4; }
+        .pdf-row.drop-target { border-color: var(--accent); }
+        .pdf-handle { color: var(--text-3); font-size: 18px; cursor: grab; }
+        .pdf-emoji { font-size: 22px; }
+        .pdf-meta { flex: 1; min-width: 0; }
+        .pdf-name { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pdf-pages { color: var(--text-2); font-size: 13px; }
+        .pdf-remove {
+            background: transparent;
+            border: none;
+            color: var(--text-3);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 6px 10px;
+            border-radius: 8px;
+        }
+        .pdf-remove:hover { color: var(--error); background: rgba(239, 68, 68, 0.08); }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #8B5CF6, #EC4899);">📚</div>
+                    <div>
+                        <h1>PDF Merger</h1>
+                        <p class="tagline">Combine multiple PDFs into a single file. Drag the rows to reorder. 100% in your browser.</p>
+                    </div>
+                </div>
+
+                <div class="tool-form">
+                    <label>Add PDF files</label>
+                    <div id="dropZone" class="drop-zone">
+                        <div class="big">📥</div>
+                        <div><strong>Drop PDF files here</strong> or click to browse</div>
+                        <div style="font-size: 13px; margin-top: 6px;">You can add several files, then drag the rows to set the order.</div>
+                    </div>
+                    <input type="file" id="fileInput" accept="application/pdf,.pdf" multiple style="display:none;">
+
+                    <div class="pdf-list" id="pdfList"></div>
+
+                    <div class="row" style="margin-top: 18px; align-items: center;">
+                        <div>
+                            <label>Output filename</label>
+                            <input type="text" id="outName" value="combined.pdf" placeholder="combined.pdf">
+                        </div>
+                        <div style="display: flex; align-items: flex-end; height: 100%;">
+                            <button class="btn primary" id="mergeBtn" type="button" disabled>Merge PDFs</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="status" class="result-card" style="display:none;"></div>
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+                <div id="resultBox" class="result-card" style="display:none; flex-direction:column; align-items:flex-start; gap:14px;">
+                    <p>✓ Merged. <span id="resultMeta" style="color:var(--text-2); font-size:13px;"></span></p>
+                    <a class="btn primary" id="dlBtn" download="combined.pdf">⬇ Download merged PDF</a>
+                </div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>Each PDF is parsed in your browser using <a href="https://pdf-lib.js.org" target="_blank" rel="noopener">pdf-lib</a> (a pure-JavaScript PDF toolkit). The pages are copied into a fresh document in the order you set and saved to a single <code>.pdf</code> file. Nothing is uploaded — disconnect from the internet after the page loads and it still works.</p>
+                    <p style="margin-top:12px;"><strong>Tip:</strong> drag the rows by the ⋮⋮ handle (or anywhere on the row) to change the order. Click ✕ on a row to remove a file from the list. Page counts are read from the PDF metadata.</p>
+                    <p style="margin-top:12px;"><strong>Scope:</strong> form fields, annotations, bookmarks and embedded fonts are preserved. Encrypted PDFs are not supported — remove the password first if your file has one.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        const fileInput = $("fileInput"), dropZone = $("dropZone"), pdfList = $("pdfList");
+        const mergeBtn = $("mergeBtn"), outName = $("outName"), dlBtn = $("dlBtn");
+        const statusBox = $("status"), errorBox = $("errorBox"), resultBox = $("resultBox"), resultMeta = $("resultMeta");
+
+        let files = []; // each: { id, file, buffer, pageCount, name }
+        let nextId = 1;
+
+        function setStatus(m) { statusBox.textContent = m; statusBox.style.display = "block"; errorBox.style.display = "none"; resultBox.style.display = "none"; }
+        function setError(m) { errorBox.textContent = "⚠ " + m; errorBox.style.display = "block"; statusBox.style.display = "none"; resultBox.style.display = "none"; }
+        function clearMessages() { statusBox.style.display = "none"; errorBox.style.display = "none"; }
+
+        async function addFiles(fileList) {
+            const arr = Array.from(fileList);
+            const pdfs = arr.filter(f => f.type === "application/pdf" || /\.pdf$/i.test(f.name));
+            if (pdfs.length === 0) { setError("Drop one or more .pdf files."); return; }
+            if (pdfs.length < arr.length) setStatus(`Ignored ${arr.length - pdfs.length} non-PDF file(s).`);
+            for (const f of pdfs) {
+                try {
+                    const buffer = await f.arrayBuffer();
+                    // Read page count via pdf-lib (with throw on encrypted)
+                    const PDFLib = window.PDFLib;
+                    const doc = await PDFLib.PDFDocument.load(buffer, { ignoreEncryption: false }).catch(async (e) => {
+                        if (/encrypted/i.test(e.message || "")) throw new Error(`"${f.name}" is encrypted — remove the password first.`);
+                        throw e;
+                    });
+                    files.push({ id: nextId++, file: f, buffer, pageCount: doc.getPageCount(), name: f.name });
+                } catch (e) {
+                    setError(`Failed to load "${f.name}": ${e.message || e}`);
+                    continue;
+                }
+            }
+            renderList();
+        }
+
+        function renderList() {
+            pdfList.innerHTML = "";
+            mergeBtn.disabled = files.length < 1;
+            for (const f of files) {
+                const row = document.createElement("div");
+                row.className = "pdf-row";
+                row.draggable = true;
+                row.dataset.id = String(f.id);
+                row.innerHTML = `
+                    <span class="pdf-handle" title="Drag to reorder">⋮⋮</span>
+                    <span class="pdf-emoji">📄</span>
+                    <div class="pdf-meta">
+                        <div class="pdf-name">${escapeHtml(f.name)}</div>
+                        <div class="pdf-pages">${f.pageCount} page${f.pageCount === 1 ? "" : "s"} · ${humanSize(f.file.size)}</div>
+                    </div>
+                    <button class="pdf-remove" title="Remove" data-action="remove">✕</button>
+                `;
+                row.querySelector("[data-action=remove]").addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    files = files.filter(x => x.id !== f.id);
+                    renderList();
+                });
+                row.addEventListener("dragstart", (e) => {
+                    row.classList.add("dragging");
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", String(f.id));
+                });
+                row.addEventListener("dragend", () => {
+                    row.classList.remove("dragging");
+                    pdfList.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
+                });
+                row.addEventListener("dragover", (e) => {
+                    e.preventDefault();
+                    row.classList.add("drop-target");
+                });
+                row.addEventListener("dragleave", () => row.classList.remove("drop-target"));
+                row.addEventListener("drop", (e) => {
+                    e.preventDefault();
+                    const fromId = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                    const toId = f.id;
+                    if (fromId === toId) return;
+                    const fromIdx = files.findIndex(x => x.id === fromId);
+                    const toIdx = files.findIndex(x => x.id === toId);
+                    if (fromIdx < 0 || toIdx < 0) return;
+                    const [moved] = files.splice(fromIdx, 1);
+                    files.splice(toIdx, 0, moved);
+                    renderList();
+                });
+                pdfList.appendChild(row);
+            }
+        }
+
+        function humanSize(bytes) {
+            if (bytes < 1024) return bytes + " B";
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+            return (bytes / 1024 / 1024).toFixed(2) + " MB";
+        }
+        function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+
+        // Drop zone wiring
+        dropZone.addEventListener("click", () => fileInput.click());
+        dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+        dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZone.classList.remove("dragover");
+            if (e.dataTransfer.files && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener("change", () => { if (fileInput.files) addFiles(fileInput.files); fileInput.value = ""; });
+
+        // Merge action
+        mergeBtn.addEventListener("click", async () => {
+            if (!window.PDFLib) { setError("Library still loading, retry in a second."); return; }
+            if (files.length < 1) { setError("Add at least one PDF."); return; }
+            clearMessages();
+            try {
+                setStatus("Merging…");
+                const PDFLib = window.PDFLib;
+                const out = await PDFLib.PDFDocument.create();
+                let totalPages = 0;
+                for (const f of files) {
+                    const src = await PDFLib.PDFDocument.load(f.buffer, { ignoreEncryption: false });
+                    const idxs = src.getPageIndices();
+                    const copied = await out.copyPages(src, idxs);
+                    for (const p of copied) out.addPage(p);
+                    totalPages += idxs.length;
+                }
+                const bytes = await out.save();
+                const blob = new Blob([bytes], { type: "application/pdf" });
+                const url = URL.createObjectURL(blob);
+                const name = (outName.value || "combined.pdf").replace(/[^a-zA-Z0-9._\- ]/g, "_") || "combined.pdf";
+                const finalName = /\.pdf$/i.test(name) ? name : name + ".pdf";
+                dlBtn.href = url;
+                dlBtn.download = finalName;
+                statusBox.style.display = "none";
+                resultBox.style.display = "flex";
+                resultMeta.textContent = `${files.length} PDF${files.length === 1 ? "" : "s"} → ${totalPages} pages · ${humanSize(blob.size)} · ${finalName}`;
+            } catch (e) {
+                setError("Merge failed: " + (e.message || e));
+            }
+        });
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>UtilsWeb — 15 privacy-first browser tools</title>
+    <meta name="description" content="A growing collection of fast, private web tools — PDF, images, audio, video. All in your browser. Nothing leaves your device.">
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="icon" type="image/svg+xml" href="static/favicon.svg">
+</head>
+<body>
+    <!-- Animated mesh background -->
+    <div class="mesh" aria-hidden="true">
+        <div class="blob blob-cyan"></div>
+        <div class="blob blob-violet"></div>
+        <div class="blob blob-pink"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="./">
+                <span class="brand-logo">⚙︎</span>
+                <span class="brand-name">UtilsWeb</span>
+                <span class="brand-dot" aria-hidden="true"></span>
+            </a>
+            <nav>
+                <a href="./" class="active">Tools</a>
+                <a href="#why">Why</a>
+                <a href="https://utilsweb.net" class="cta">utilsweb.net</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="wrap">
+                <div class="hero-eyebrow">
+                    <span class="pulse-dot"></span>
+                    <span id="liveCount">15 tools live</span>
+                    <span class="hero-eyebrow-sep">·</span>
+                    <span>100% in-browser</span>
+                </div>
+                <h1>
+                    Tools that <em data-text="just work.">just work.</em>
+                </h1>
+                <p class="tagline">A growing collection of fast, private web tools — PDF, image, audio, video, AI. <strong>Your files never leave your device.</strong></p>
+                <div class="hero-stats">
+                    <span class="chip">⚡ Instant</span>
+                    <span class="chip">🔒 100% browser</span>
+                    <span class="chip">🚫 No upload</span>
+                    <span class="chip">📂 No signup</span>
+                    <span class="chip">🌐 Works offline</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="filters">
+            <div class="wrap">
+                <div class="filter-pills" id="filterPills">
+                    <!-- populated by main.js -->
+                </div>
+            </div>
+        </section>
+
+        <section class="tools" id="toolsRoot">
+            <div class="wrap" id="categoriesRoot">
+                <!-- categories + tool cards auto-populated by main.js -->
+            </div>
+        </section>
+
+        <section class="why" id="why">
+            <div class="wrap">
+                <h2 class="section-title"><span class="gradient-text">Why UtilsWeb?</span></h2>
+                <div class="why-grid">
+                    <div class="why-card">
+                        <div class="why-icon">🔒</div>
+                        <h4>Truly private</h4>
+                        <p>Every tool runs in your browser tab. Your files are never uploaded to any server. Close the tab, everything's gone.</p>
+                    </div>
+                    <div class="why-card">
+                        <div class="why-icon">⚡</div>
+                        <h4>No signup, no wait</h4>
+                        <p>Open the page, drop a file, get the result. Works offline once the page is loaded.</p>
+                    </div>
+                    <div class="why-card">
+                        <div class="why-icon">🧰</div>
+                        <h4>One tab, many tools</h4>
+                        <p>Bookmark <strong>utilsweb.net</strong>. Every new tool we ship shows up automatically.</p>
+                    </div>
+                    <div class="why-card">
+                        <div class="why-icon">🤖</div>
+                        <h4>Real AI, in your browser</h4>
+                        <p>Whisper, YOLO, ESRGAN, MMS-TTS — all running locally with WebGPU / WASM. No API key, no token cost.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap">
+            <p>🔒 100% client-side — nothing ever leaves your browser.</p>
+            <p>Built privately · no signup · no tracking · open source soon</p>
+        </div>
+    </footer>
+
+    <script src="static/js/tools.js"></script>
+    <script src="static/js/main.js"></script>
+</body>
+</html>

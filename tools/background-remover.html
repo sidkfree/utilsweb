@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Background Remover — UtilsWeb</title>
+    <meta name="description" content="Strip the background from any photo to a transparent PNG. Runs the model fully in your browser — no upload, no signup, no watermark.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <style>
+        .compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 18px;
+        }
+        @media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+        .compare .pane {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .compare .pane h4 { font-size: 13px; color: var(--text-2); font-weight: 600; }
+        .compare .pane .stage {
+            background: repeating-conic-gradient(#1a1a1a 0% 25%, #0f0f0f 0% 50%) 50% / 22px 22px;
+            border-radius: 10px;
+            min-height: 240px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        .compare .pane img { max-width: 100%; max-height: 480px; display: block; }
+        .progress {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--text-2);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .progress .spinner {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid var(--text-3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #6366F1, #EC4899);">🪄</div>
+                    <div>
+                        <h1>Background Remover</h1>
+                        <p class="tagline">Drop a photo, get a transparent-PNG cutout. The neural model runs <strong>fully in your browser</strong> — nothing uploaded.</p>
+                    </div>
+                </div>
+
+                <div class="tool-form">
+                    <label>Pick an image (JPG / PNG / WebP)</label>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+
+                <div id="progress" class="progress" style="display:none;">
+                    <span class="spinner"></span>
+                    <span id="progressText">Loading the model (first time only — about 30 MB, then cached)…</span>
+                </div>
+
+                <div id="compare" class="compare" style="display:none;">
+                    <div class="pane">
+                        <h4>Original</h4>
+                        <div class="stage"><img id="origImg" alt=""></div>
+                    </div>
+                    <div class="pane">
+                        <h4>Background removed</h4>
+                        <div class="stage"><img id="outImg" alt=""></div>
+                    </div>
+                </div>
+
+                <div id="resultBox" class="result-card" style="display:none; flex-direction:column; align-items:flex-start; gap:14px; margin-top: 14px;">
+                    <p>✓ Done.</p>
+                    <a class="btn primary" id="dlBtn" download="background-removed.png">⬇ Download transparent PNG</a>
+                </div>
+
+                <div id="errorBox" class="error-card" style="display:none; margin-top:14px;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>An ONNX (Open Neural Network Exchange) model from <a href="https://github.com/imgly/background-removal-js" target="_blank" rel="noopener">@imgly/background-removal</a> runs through <code>onnxruntime-web</code> directly in your tab. The first load downloads the model (~30 MB) and caches it in your browser — subsequent uses are instant. Your photo never leaves the page.</p>
+                    <p style="margin-top:12px;"><strong>Works well on:</strong> people, products on a clean background, animals, objects. <strong>Struggles with:</strong> hair detail, motion-blurred subjects, low-contrast cases where subject and background share the same color.</p>
+                    <p style="margin-top:12px;"><strong>Privacy upside:</strong> remove.bg and competitors upload your photo. We don't — that's a meaningful difference for ID photos, medical shots, or anything sensitive.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script type="module">
+        const $ = (id) => document.getElementById(id);
+        const fileInput = $("fileInput"), progress = $("progress"), progressText = $("progressText");
+        const compare = $("compare"), origImg = $("origImg"), outImg = $("outImg");
+        const resultBox = $("resultBox"), dlBtn = $("dlBtn"), errorBox = $("errorBox");
+
+        let removeBg = null;
+        let lastOutUrl = null;
+
+        function setError(m) { errorBox.textContent = "⚠ " + m; errorBox.style.display = "block"; progress.style.display = "none"; }
+        function setProgress(text) { progressText.textContent = text; progress.style.display = "flex"; errorBox.style.display = "none"; }
+
+        async function ensureLib() {
+            if (removeBg) return removeBg;
+            setProgress("Loading the model (first time only — about 30 MB, then cached)…");
+            try {
+                // esm.sh resolves bare module specifiers (e.g. onnxruntime-web) recursively,
+                // unlike a raw jsdelivr file which leaves them unresolved in the browser.
+                const mod = await import("https://esm.sh/@imgly/background-removal@1.7.0");
+                removeBg = mod.removeBackground || mod.default?.removeBackground || mod.default || mod;
+                if (typeof removeBg !== "function") {
+                    throw new Error("removeBackground is not exported by the library");
+                }
+                return removeBg;
+            } catch (e) {
+                throw new Error("Failed to load the background-removal library: " + (e.message || e));
+            }
+        }
+
+        fileInput.addEventListener("change", async () => {
+            const f = fileInput.files && fileInput.files[0];
+            if (!f) return;
+            errorBox.style.display = "none";
+            resultBox.style.display = "none";
+
+            // Preview original
+            const origUrl = URL.createObjectURL(f);
+            origImg.src = origUrl;
+            outImg.src = "";
+            compare.style.display = "grid";
+
+            try {
+                const fn = await ensureLib();
+                setProgress("Processing… (10–40 seconds on first run, faster after)");
+                // The library accepts Blob/File/URL and returns a Blob (image/png)
+                const callable = typeof fn === "function" ? fn : fn.removeBackground;
+                const outBlob = await callable(f, {
+                    progress: (key, current, total) => {
+                        if (total) setProgress(`Processing ${key} (${current}/${total})…`);
+                    },
+                    output: { format: "image/png" },
+                });
+                if (lastOutUrl) URL.revokeObjectURL(lastOutUrl);
+                lastOutUrl = URL.createObjectURL(outBlob);
+                outImg.src = lastOutUrl;
+                progress.style.display = "none";
+                dlBtn.href = lastOutUrl;
+                const base = f.name.replace(/\.[^.]+$/, "");
+                dlBtn.download = `${base}-nobg.png`;
+                resultBox.style.display = "flex";
+            } catch (e) {
+                console.error(e);
+                setError(e.message || String(e));
+            }
+        });
+    </script>
+</body>
+</html>

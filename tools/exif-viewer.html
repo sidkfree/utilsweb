@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>EXIF Viewer & Stripper — UtilsWeb</title>
+    <meta name="description" content="See every hidden metadata field in a photo — camera, GPS, timestamp — and strip it all in one click. 100% browser.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <style>
+        .preview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 18px;
+        }
+        @media (max-width: 760px) { .preview { grid-template-columns: 1fr; } }
+        .pane {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+        }
+        .pane h4 { font-size: 14px; color: var(--text-2); margin-bottom: 10px; }
+        .pane img { max-width: 100%; max-height: 360px; border-radius: 10px; display: block; }
+        .meta-table {
+            font-size: 13px;
+            max-height: 360px;
+            overflow: auto;
+            font-family: monospace;
+        }
+        .meta-row {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 8px;
+            padding: 4px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+        .meta-row .k { color: var(--text-2); font-weight: 600; }
+        .meta-row .v { color: var(--text); word-break: break-all; }
+        .meta-row.privacy { color: var(--error); }
+        .meta-row.privacy .v { color: var(--error); font-weight: 700; }
+        .gps-link { color: var(--accent); text-decoration: underline; }
+        .privacy-badge {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid var(--error);
+            color: var(--error);
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+        .clean-badge {
+            display: inline-block;
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid var(--success);
+            color: var(--success);
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #DC2626, #F59E0B);">🔍</div>
+                    <div>
+                        <h1>EXIF Viewer &amp; Stripper</h1>
+                        <p class="tagline">See every hidden metadata field in your photo — camera, GPS, timestamp — and strip them with one click.</p>
+                    </div>
+                </div>
+
+                <div class="tool-form">
+                    <label>Pick a photo (JPG / PNG / HEIC / WebP)</label>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+
+                <div id="preview" class="preview" style="display:none;">
+                    <div class="pane">
+                        <h4>Photo</h4>
+                        <img id="img" alt="">
+                    </div>
+                    <div class="pane">
+                        <h4>Hidden metadata</h4>
+                        <div id="privacyBox"></div>
+                        <div class="meta-table" id="metaTable"></div>
+                        <div style="margin-top: 14px;">
+                            <button class="btn primary" id="stripBtn" type="button" disabled>🧹 Strip metadata &amp; download</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="errorBox" class="error-card" style="display:none; margin-top:14px;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>Your photo is parsed in your browser with <a href="https://github.com/MikeKovarik/exifr" target="_blank" rel="noopener">exifr</a> — a tiny pure-JavaScript EXIF parser. Every metadata block (EXIF, IPTC, XMP, GPS) is read and listed. The "Strip" button redraws the pixels into a fresh <code>&lt;canvas&gt;</code> and re-encodes them with <code>toBlob()</code> — re-encoding always discards metadata, so the output has zero EXIF leak.</p>
+                    <p style="margin-top:12px;"><strong>Why this matters:</strong> photos taken on your phone carry your <em>exact GPS coordinates</em>, device serial, software version, and timestamp. Posting them to any site (Twitter, Instagram, blog) without stripping is a privacy leak. Most platforms strip on upload, but plenty of small forums, image hosts, and email do not.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script type="module">
+        const $ = (id) => document.getElementById(id);
+        const fileInput = $("fileInput"), preview = $("preview"), img = $("img"), metaTable = $("metaTable");
+        const stripBtn = $("stripBtn"), privacyBox = $("privacyBox"), errorBox = $("errorBox");
+
+        let currentFile = null;
+        const PRIVACY_KEYS = ["GPSLatitude", "GPSLongitude", "GPSAltitude", "GPSDateStamp", "BodySerialNumber", "InternalSerialNumber", "OwnerName", "CameraOwnerName", "UserComment"];
+
+        function setError(m) { errorBox.textContent = "⚠ " + m; errorBox.style.display = "block"; }
+        function clearError() { errorBox.style.display = "none"; }
+
+        function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+
+        async function readMeta(file) {
+            const exifr = (await import("https://esm.sh/exifr@7.1.3")).default;
+            // Read everything including GPS
+            return await exifr.parse(file, { gps: true, iptc: true, xmp: true, icc: false, jfif: true, ihdr: true, tiff: true, exif: true });
+        }
+
+        function renderMeta(meta) {
+            if (!meta) {
+                metaTable.innerHTML = `<div style="color: var(--success); font-size: 14px;">✓ No EXIF/IPTC/XMP metadata found — this photo is already clean.</div>`;
+                privacyBox.innerHTML = `<div class="clean-badge">🔒 No privacy risks — photo has no embedded metadata.</div>`;
+                stripBtn.disabled = true;
+                return;
+            }
+            const keys = Object.keys(meta);
+            const privacyHits = keys.filter(k => PRIVACY_KEYS.includes(k));
+            const hasGPS = "latitude" in meta || "GPSLatitude" in meta;
+            if (privacyHits.length > 0 || hasGPS) {
+                let msg = "🚨 <strong>Privacy risks detected:</strong> ";
+                const bits = [];
+                if (hasGPS) bits.push("GPS coordinates");
+                if (privacyHits.includes("BodySerialNumber") || privacyHits.includes("InternalSerialNumber")) bits.push("device serial number");
+                if (privacyHits.includes("OwnerName") || privacyHits.includes("CameraOwnerName")) bits.push("owner name");
+                if (privacyHits.includes("UserComment")) bits.push("user comment");
+                if (bits.length === 0) bits.push("identifying fields");
+                privacyBox.innerHTML = `<div class="privacy-badge">${msg}${bits.join(", ")}</div>`;
+            } else {
+                privacyBox.innerHTML = `<div class="clean-badge">✓ No obvious privacy risks (no GPS, no serial). Other metadata is informational.</div>`;
+            }
+
+            // Render rows
+            const rows = [];
+            for (const k of keys) {
+                let v = meta[k];
+                if (v instanceof Date) v = v.toISOString();
+                if (typeof v === "object" && v !== null) v = JSON.stringify(v);
+                const isPrivacy = PRIVACY_KEYS.includes(k) || (k.toLowerCase().includes("gps") && v != null);
+                const cls = isPrivacy ? "meta-row privacy" : "meta-row";
+                let vHtml = escapeHtml(String(v));
+                // GPS map link
+                if (k.toLowerCase() === "latitude" && typeof meta.longitude === "number") {
+                    vHtml = `${v} <a class="gps-link" href="https://www.google.com/maps?q=${meta.latitude},${meta.longitude}" target="_blank" rel="noopener">→ open in Google Maps</a>`;
+                }
+                rows.push(`<div class="${cls}"><span class="k">${escapeHtml(k)}</span><span class="v">${vHtml}</span></div>`);
+            }
+            metaTable.innerHTML = rows.join("");
+            stripBtn.disabled = false;
+        }
+
+        async function stripAndDownload(file) {
+            try {
+                const url = URL.createObjectURL(file);
+                const im = await new Promise((res, rej) => {
+                    const i = new Image();
+                    i.onload = () => res(i);
+                    i.onerror = () => rej(new Error("decode failed"));
+                    i.src = url;
+                });
+                const canvas = document.createElement("canvas");
+                canvas.width = im.naturalWidth;
+                canvas.height = im.naturalHeight;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(im, 0, 0);
+                // Match output format to input
+                const isPng = /\.png$/i.test(file.name) || file.type === "image/png";
+                const mime = isPng ? "image/png" : "image/jpeg";
+                const quality = isPng ? undefined : 0.95;
+                const blob = await new Promise((res, rej) => canvas.toBlob(b => b ? res(b) : rej(new Error("encode failed")), mime, quality));
+                const outUrl = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = outUrl;
+                const base = file.name.replace(/\.[^.]+$/, "");
+                a.download = `${base}-clean.${isPng ? "png" : "jpg"}`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+                setTimeout(() => URL.revokeObjectURL(outUrl), 5000);
+            } catch (e) {
+                setError("Strip failed: " + (e.message || e));
+            }
+        }
+
+        fileInput.addEventListener("change", async () => {
+            const f = fileInput.files && fileInput.files[0];
+            if (!f) return;
+            clearError();
+            currentFile = f;
+            img.src = URL.createObjectURL(f);
+            preview.style.display = "grid";
+            metaTable.innerHTML = `<div style="color: var(--text-2);">Reading metadata…</div>`;
+            try {
+                const meta = await readMeta(f);
+                renderMeta(meta);
+            } catch (e) {
+                setError("Could not read metadata: " + (e.message || e));
+            }
+        });
+
+        stripBtn.addEventListener("click", () => {
+            if (currentFile) stripAndDownload(currentFile);
+        });
+    </script>
+</body>
+</html>

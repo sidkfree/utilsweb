@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Whisper Transcriber — UtilsWeb</title>
+    <meta name="description" content="Transcribe audio (mic or file) to text using OpenAI's Whisper running locally in your browser. No upload, no signup.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <style>
+        .progress {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--text-2);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .progress .spinner {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid var(--text-3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .progress-bar {
+            margin-top: 8px;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-bar > div {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            width: 0%;
+            transition: width 0.2s;
+        }
+        .transcript {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 18px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.7;
+            min-height: 80px;
+        }
+        .mic-pulse {
+            display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--error); animation: pulse 1.2s infinite; margin-right: 8px;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #06B6D4, #6366F1);">🎙️</div>
+                    <div>
+                        <h1>Whisper Transcriber</h1>
+                        <p class="tagline">Speak into your mic or drop an audio file → get a text transcript. <strong>Whisper-tiny running locally in your browser.</strong></p>
+                    </div>
+                </div>
+
+                <div class="tool-form">
+                    <div class="row">
+                        <div>
+                            <label>Model</label>
+                            <select id="modelSel">
+                                <option value="Xenova/whisper-tiny.en" selected>Tiny (English, ~75 MB)</option>
+                                <option value="Xenova/whisper-base.en">Base (English, ~150 MB)</option>
+                                <option value="Xenova/whisper-tiny">Tiny (Multilingual, ~75 MB)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Language hint (multilingual only)</label>
+                            <select id="langSel">
+                                <option value="en" selected>English</option>
+                                <option value="fr">French</option>
+                                <option value="es">Spanish</option>
+                                <option value="de">German</option>
+                                <option value="it">Italian</option>
+                                <option value="ar">Arabic</option>
+                                <option value="zh">Chinese</option>
+                                <option value="ja">Japanese</option>
+                                <option value="pt">Portuguese</option>
+                                <option value="ru">Russian</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <label style="margin-top:14px;">Audio file (mp3, wav, m4a, webm…) OR use the mic button below</label>
+                    <input type="file" id="fileInput" accept="audio/*,video/*">
+
+                    <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+                        <button class="btn primary" id="micStart" type="button">🎙️ Record from mic</button>
+                        <button class="btn primary" id="micStop" type="button" disabled style="background: var(--error);">■ Stop & transcribe</button>
+                    </div>
+                </div>
+
+                <div id="progress" class="progress" style="display:none;">
+                    <span class="spinner"></span>
+                    <div style="flex:1;">
+                        <div id="progressText">Loading the model…</div>
+                        <div class="progress-bar"><div id="progressFill"></div></div>
+                    </div>
+                </div>
+
+                <div id="errorBox" class="error-card" style="display:none; margin-top:14px;"></div>
+
+                <div id="transcriptWrap" style="display:none;">
+                    <label style="display:block; margin-top:18px;">Transcript</label>
+                    <div class="transcript" id="transcript"></div>
+                    <div style="display:flex; gap:10px; margin-top:12px;">
+                        <button class="btn primary" id="copyBtn" type="button">📋 Copy</button>
+                        <a class="btn primary" id="dlBtn" download="transcript.txt">⬇ Download .txt</a>
+                    </div>
+                </div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>OpenAI's <strong>Whisper</strong> model is loaded into your browser via <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">transformers.js</a> + ONNX Runtime Web. The model files (~75 MB for tiny.en) are downloaded the first time and then cached in your browser's storage — subsequent transcriptions are instant. Your audio never leaves the page.</p>
+                    <p style="margin-top:12px;"><strong>Model picker:</strong> Tiny is fast and good for clear English. Base is slower but more accurate. Multilingual models support 90+ languages — pick the language hint above. WebGPU acceleration is used automatically if your browser/GPU supports it.</p>
+                    <p style="margin-top:12px;"><strong>Privacy:</strong> commercial transcription APIs cost $0.006–$0.024/minute and upload your audio. This tool is free, offline-capable after first load, and the audio never touches a server.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script type="module">
+        const $ = (id) => document.getElementById(id);
+        const fileInput = $("fileInput"), modelSel = $("modelSel"), langSel = $("langSel");
+        const micStart = $("micStart"), micStop = $("micStop");
+        const progress = $("progress"), progressText = $("progressText"), progressFill = $("progressFill");
+        const errorBox = $("errorBox");
+        const transcriptWrap = $("transcriptWrap"), transcriptEl = $("transcript"), copyBtn = $("copyBtn"), dlBtn = $("dlBtn");
+
+        let pipelineFn = null;
+        let transcriber = null;
+        let currentModelId = null;
+        let micRecorder = null, micChunks = [], micStream = null;
+
+        function setError(m) { errorBox.textContent = "⚠ " + m; errorBox.style.display = "block"; progress.style.display = "none"; }
+        function setProgress(text, pct) {
+            progressText.textContent = text;
+            progressFill.style.width = (pct != null ? Math.max(0, Math.min(100, pct)) : 0) + "%";
+            progress.style.display = "flex";
+            errorBox.style.display = "none";
+        }
+        function clearProgress() { progress.style.display = "none"; }
+
+        async function ensureLib() {
+            if (pipelineFn) return pipelineFn;
+            setProgress("Loading transformers.js…", 0);
+            // esm.sh recursively resolves the library's bare imports (onnxruntime-web, etc.)
+            const t = await import("https://esm.sh/@xenova/transformers@2.17.2");
+            pipelineFn = t.pipeline;
+            t.env.allowLocalModels = false;
+            return pipelineFn;
+        }
+
+        async function ensureModel() {
+            const id = modelSel.value;
+            if (transcriber && currentModelId === id) return transcriber;
+            const pipeline = await ensureLib();
+            setProgress(`Loading model ${id}…`, 0);
+            transcriber = await pipeline("automatic-speech-recognition", id, {
+                progress_callback: (info) => {
+                    if (info.status === "progress" && info.file) {
+                        const pct = info.progress != null ? info.progress : (info.loaded && info.total ? 100 * info.loaded / info.total : 0);
+                        setProgress(`Loading ${info.file}…`, pct);
+                    } else if (info.status === "ready") {
+                        setProgress(`Model ready.`, 100);
+                    }
+                },
+            });
+            currentModelId = id;
+            return transcriber;
+        }
+
+        async function decodeToFloat32(file) {
+            // Decode any browser-supported audio container to mono Float32 PCM at 16 kHz
+            const buf = await file.arrayBuffer();
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+            const decoded = await audioCtx.decodeAudioData(buf);
+            // Downmix to mono
+            const channels = decoded.numberOfChannels;
+            const len = decoded.length;
+            const mono = new Float32Array(len);
+            for (let c = 0; c < channels; c++) {
+                const d = decoded.getChannelData(c);
+                for (let i = 0; i < len; i++) mono[i] += d[i] / channels;
+            }
+            // Resample if needed (decoded.sampleRate may not equal 16000 in some browsers)
+            if (decoded.sampleRate === 16000) return mono;
+            const ratio = 16000 / decoded.sampleRate;
+            const outLen = Math.round(len * ratio);
+            const out = new Float32Array(outLen);
+            for (let i = 0; i < outLen; i++) {
+                const srcI = i / ratio;
+                const lo = Math.floor(srcI), hi = Math.min(lo + 1, len - 1);
+                const t = srcI - lo;
+                out[i] = mono[lo] * (1 - t) + mono[hi] * t;
+            }
+            return out;
+        }
+
+        async function transcribeAudio(file) {
+            try {
+                const t = await ensureModel();
+                setProgress("Decoding audio…", null);
+                const audio = await decodeToFloat32(file);
+                setProgress("Transcribing (the first chunk takes a few seconds)…", null);
+                const opts = { chunk_length_s: 30, stride_length_s: 5 };
+                if (!modelSel.value.endsWith(".en")) opts.language = langSel.value;
+                const result = await t(audio, opts);
+                clearProgress();
+                const text = (result && result.text) || "(no speech detected)";
+                transcriptEl.textContent = text;
+                transcriptWrap.style.display = "block";
+                const blob = new Blob([text], { type: "text/plain" });
+                dlBtn.href = URL.createObjectURL(blob);
+            } catch (e) {
+                console.error(e);
+                setError("Transcription failed: " + (e.message || e));
+            }
+        }
+
+        fileInput.addEventListener("change", () => {
+            const f = fileInput.files && fileInput.files[0];
+            if (f) transcribeAudio(f);
+        });
+
+        // Insecure-origin warning: getUserMedia is blocked on plain-HTTP IP addresses.
+        if (window.isSecureContext !== true) {
+            const warn = document.createElement("div");
+            warn.className = "error-card";
+            warn.style.margin = "14px 0";
+            warn.innerHTML = `⚠ <strong>Microphone is disabled on this page.</strong> Browsers only expose the mic over <code>https://</code> or <code>localhost</code>. File-upload transcription still works; mic recording will return a permission error until you open the site over HTTPS (e.g. once deployed to <code>https://utilsweb.net</code>).`;
+            const form = document.querySelector(".tool-form");
+            form.parentNode.insertBefore(warn, form);
+        }
+
+        micStart.addEventListener("click", async () => {
+            errorBox.style.display = "none";
+            if (window.isSecureContext !== true || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                setError("Microphone requires HTTPS or localhost — the current origin is plain HTTP. Use the file-upload option instead, or open the site over https://.");
+                return;
+            }
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (e) {
+                setError("Microphone permission denied: " + (e.message || e)); return;
+            }
+            micChunks = [];
+            const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+            micRecorder = new MediaRecorder(micStream, { mimeType: mime });
+            micRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) micChunks.push(e.data); };
+            micRecorder.onstop = () => {
+                if (micStream) { for (const t of micStream.getTracks()) t.stop(); micStream = null; }
+                const blob = new Blob(micChunks, { type: mime });
+                micStart.innerHTML = "🎙️ Record from mic";
+                micStart.disabled = false;
+                micStop.disabled = true;
+                transcribeAudio(new File([blob], "mic.webm", { type: mime }));
+            };
+            micRecorder.start();
+            micStart.innerHTML = '<span class="mic-pulse"></span>Recording…';
+            micStart.disabled = true;
+            micStop.disabled = false;
+        });
+        micStop.addEventListener("click", () => {
+            if (micRecorder && micRecorder.state !== "inactive") micRecorder.stop();
+        });
+
+        copyBtn.addEventListener("click", async () => {
+            try {
+                await navigator.clipboard.writeText(transcriptEl.textContent);
+                copyBtn.textContent = "✓ Copied";
+                setTimeout(() => copyBtn.textContent = "📋 Copy", 1500);
+            } catch (e) {}
+        });
+    </script>
+</body>
+</html>

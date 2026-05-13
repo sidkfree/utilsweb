@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>OCR — Photo to Text — UtilsWeb</title>
+    <meta name="description" content="Extract text from any photo, screenshot, or scan. 100+ languages. 100% browser.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+    <style>
+        .progress {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--text-2);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .progress .spinner {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid var(--text-3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .progress-bar {
+            margin-top: 8px;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-bar > div {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            width: 0%;
+            transition: width 0.2s;
+        }
+        .panes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 18px;
+        }
+        @media (max-width: 760px) { .panes { grid-template-columns: 1fr; } }
+        .pane {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+        }
+        .pane h4 { font-size: 14px; color: var(--text-2); margin-bottom: 10px; }
+        .pane img { max-width: 100%; max-height: 460px; border-radius: 10px; display: block; }
+        .transcript {
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.7;
+            min-height: 180px;
+            max-height: 460px;
+            overflow: auto;
+        }
+        .confidence-tag {
+            display: inline-block;
+            background: var(--bg-card-2);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #0EA5E9, #6366F1);">📄</div>
+                    <div>
+                        <h1>OCR — Photo to Text</h1>
+                        <p class="tagline">Drop a screenshot, scan, business card or photo of handwriting → clean text. 100+ languages.</p>
+                    </div>
+                </div>
+
+                <div class="tool-form">
+                    <div class="row">
+                        <div>
+                            <label>Language</label>
+                            <select id="langSel">
+                                <option value="eng" selected>English</option>
+                                <option value="fra">French</option>
+                                <option value="spa">Spanish</option>
+                                <option value="deu">German</option>
+                                <option value="ita">Italian</option>
+                                <option value="por">Portuguese</option>
+                                <option value="ara">Arabic</option>
+                                <option value="chi_sim">Chinese (Simplified)</option>
+                                <option value="chi_tra">Chinese (Traditional)</option>
+                                <option value="jpn">Japanese</option>
+                                <option value="kor">Korean</option>
+                                <option value="rus">Russian</option>
+                                <option value="nld">Dutch</option>
+                                <option value="pol">Polish</option>
+                                <option value="tur">Turkish</option>
+                                <option value="vie">Vietnamese</option>
+                                <option value="ind">Indonesian</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Pick an image (or paste with Ctrl+V)</label>
+                            <input type="file" id="fileInput" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="progress" class="progress" style="display:none;">
+                    <span class="spinner"></span>
+                    <div style="flex:1;">
+                        <div id="progressText">Loading language data…</div>
+                        <div class="progress-bar"><div id="progressFill"></div></div>
+                    </div>
+                </div>
+
+                <div id="panes" class="panes" style="display:none;">
+                    <div class="pane">
+                        <h4>Source image</h4>
+                        <img id="img" alt="">
+                    </div>
+                    <div class="pane">
+                        <h4>Extracted text</h4>
+                        <div id="confidenceTag" class="confidence-tag" style="display:none;"></div>
+                        <div id="transcript" class="transcript"></div>
+                        <div style="display:flex; gap:8px; margin-top: 12px;">
+                            <button class="btn primary" id="copyBtn" type="button">📋 Copy</button>
+                            <a class="btn primary" id="dlBtn" download="ocr.txt">⬇ .txt</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="errorBox" class="error-card" style="display:none; margin-top:14px;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>Your image is processed by <a href="https://tesseract.projectnaptha.com" target="_blank" rel="noopener">Tesseract.js</a> — a pure-JavaScript port of Google's Tesseract OCR engine. The language model (~5–15 MB depending on language) is downloaded the first time and cached. Your image never leaves the page.</p>
+                    <p style="margin-top:12px;"><strong>Best results on:</strong> typed text, screenshots, scans, business cards, signs. <strong>Tougher on:</strong> handwriting, low contrast, rotated text — try rotating the image first if accuracy is poor.</p>
+                    <p style="margin-top:12px;"><strong>Privacy:</strong> commercial OCR APIs (Google Vision, AWS Textract) cost $1–$5 per 1000 pages and upload your scans. This is free + private — useful for receipts, ID cards, medical scans, contracts.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        const fileInput = $("fileInput"), langSel = $("langSel"), panes = $("panes");
+        const img = $("img"), transcript = $("transcript"), confidenceTag = $("confidenceTag");
+        const progress = $("progress"), progressText = $("progressText"), progressFill = $("progressFill");
+        const copyBtn = $("copyBtn"), dlBtn = $("dlBtn"), errorBox = $("errorBox");
+
+        let worker = null;
+        let currentLang = null;
+
+        function setError(m) { errorBox.textContent = "⚠ " + m; errorBox.style.display = "block"; progress.style.display = "none"; }
+        function clearError() { errorBox.style.display = "none"; }
+        function setProgress(text, pct) {
+            progressText.textContent = text;
+            progressFill.style.width = (pct != null ? Math.max(0, Math.min(100, pct)) : 0) + "%";
+            progress.style.display = "flex";
+        }
+
+        async function ensureWorker(lang) {
+            if (worker && currentLang === lang) return worker;
+            if (worker) { await worker.terminate(); worker = null; }
+            if (!window.Tesseract) throw new Error("Tesseract library failed to load — retry in a second.");
+            setProgress(`Loading ${lang} language data…`, 0);
+            worker = await Tesseract.createWorker(lang, 1, {
+                logger: (m) => {
+                    if (m.progress != null) setProgress(`${m.status} (${lang})`, m.progress * 100);
+                },
+            });
+            currentLang = lang;
+            return worker;
+        }
+
+        async function runOcr(blob) {
+            clearError();
+            img.src = URL.createObjectURL(blob);
+            panes.style.display = "grid";
+            transcript.textContent = "";
+            confidenceTag.style.display = "none";
+            try {
+                const w = await ensureWorker(langSel.value);
+                setProgress("Recognising text…", 0);
+                const { data } = await w.recognize(blob, {}, { text: true });
+                progress.style.display = "none";
+                transcript.textContent = data.text || "(no text detected)";
+                if (data.confidence != null) {
+                    confidenceTag.textContent = `Average confidence: ${Math.round(data.confidence)}%`;
+                    confidenceTag.style.display = "inline-block";
+                }
+                const tb = new Blob([data.text || ""], { type: "text/plain" });
+                dlBtn.href = URL.createObjectURL(tb);
+            } catch (e) {
+                setError("OCR failed: " + (e.message || e));
+            }
+        }
+
+        fileInput.addEventListener("change", () => {
+            const f = fileInput.files && fileInput.files[0];
+            if (f) runOcr(f);
+        });
+        // Ctrl+V paste support
+        window.addEventListener("paste", (e) => {
+            const items = e.clipboardData && e.clipboardData.items;
+            if (!items) return;
+            for (const it of items) {
+                if (it.kind === "file" && it.type.startsWith("image/")) {
+                    runOcr(it.getAsFile());
+                    return;
+                }
+            }
+        });
+        copyBtn.addEventListener("click", async () => {
+            try {
+                await navigator.clipboard.writeText(transcript.textContent);
+                copyBtn.textContent = "✓ Copied";
+                setTimeout(() => copyBtn.textContent = "📋 Copy", 1500);
+            } catch (e) {}
+        });
+        // Re-run when language changes if we already have an image
+        langSel.addEventListener("change", () => {
+            const f = fileInput.files && fileInput.files[0];
+            if (f) runOcr(f);
+        });
+    })();
+    </script>
+</body>
+</html>

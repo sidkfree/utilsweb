@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Live Object Detection — UtilsWeb</title>
+    <meta name="description" content="Point your camera and see real-time object detection bounding boxes. YOLO running entirely in your browser.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <style>
+        .stage {
+            position: relative;
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            margin-top: 14px;
+        }
+        .stage video, .stage canvas {
+            display: block;
+            width: 100%;
+            max-height: 600px;
+        }
+        .stage canvas {
+            position: absolute; top: 0; left: 0;
+            pointer-events: none;
+        }
+        .fps-tag {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(0,0,0,0.75); color: #fff;
+            padding: 4px 10px; border-radius: 999px;
+            font-size: 12px; font-family: monospace;
+        }
+        .progress {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--text-2);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .progress .spinner {
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid var(--text-3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .progress-bar {
+            margin-top: 8px; height: 6px;
+            background: var(--border); border-radius: 3px; overflow: hidden;
+        }
+        .progress-bar > div {
+            height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            width: 0%; transition: width 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #16A34A, #06B6D4);">🤖</div>
+                    <div>
+                        <h1>Live Object Detection</h1>
+                        <p class="tagline">Point your camera, see real-time bounding boxes. <strong>YOLO running entirely in your browser.</strong></p>
+                    </div>
+                </div>
+
+                <div class="tool-form">
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn primary" id="startBtn" type="button">📷 Start camera + detect</button>
+                        <button class="btn primary" id="stopBtn" type="button" disabled style="background: var(--error);">■ Stop</button>
+                        <button class="btn primary" id="snapBtn" type="button" disabled>📸 Save snapshot with boxes</button>
+                    </div>
+                </div>
+
+                <div id="progress" class="progress" style="display:none;">
+                    <span class="spinner"></span>
+                    <div style="flex:1;">
+                        <div id="progressText">Loading the YOLO model…</div>
+                        <div class="progress-bar"><div id="progressFill"></div></div>
+                    </div>
+                </div>
+
+                <div id="stage" class="stage" style="display:none;">
+                    <video id="video" autoplay playsinline muted></video>
+                    <canvas id="overlay"></canvas>
+                    <div id="fpsTag" class="fps-tag">— fps</div>
+                </div>
+
+                <div id="errorBox" class="error-card" style="display:none; margin-top:14px;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>A YOLOS-tiny object detection model is loaded into your tab via <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">transformers.js</a> + ONNX Runtime Web. Each video frame is captured, fed to the model, and the predicted bounding boxes are drawn on a transparent canvas overlaid on the video. WebGPU is used when available (much faster); WASM otherwise.</p>
+                    <p style="margin-top:12px;"><strong>Detects:</strong> 91 COCO classes — person, car, bicycle, dog, cat, bottle, laptop, book, chair, phone, tv, plant, etc.</p>
+                    <p style="margin-top:12px;"><strong>Privacy:</strong> the model runs locally on your device. Your camera feed never leaves your browser — there is no network request once the model is cached. That's a meaningful difference vs cloud APIs that ingest your video.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script type="module">
+        const $ = (id) => document.getElementById(id);
+        const startBtn = $("startBtn"), stopBtn = $("stopBtn"), snapBtn = $("snapBtn");
+        const stage = $("stage"), video = $("video"), overlay = $("overlay"), fpsTag = $("fpsTag");
+        const progress = $("progress"), progressText = $("progressText"), progressFill = $("progressFill");
+        const errorBox = $("errorBox");
+
+        let detector = null;
+        let stream = null;
+        let running = false;
+        let lastT = 0;
+
+        // Secure-context warning
+        if (window.isSecureContext !== true) {
+            const warn = document.createElement("div");
+            warn.className = "error-card";
+            warn.style.margin = "14px 0";
+            warn.innerHTML = `⚠ <strong>Camera is disabled on this page.</strong> Browsers only allow getUserMedia over <code>https://</code> or <code>localhost</code>. Open the site over HTTPS (e.g. once deployed to <code>https://utilsweb.net</code>) for live object detection to work.`;
+            const form = document.querySelector(".tool-form");
+            form.parentNode.insertBefore(warn, form);
+        }
+
+        function setError(m) { errorBox.textContent = "⚠ " + m; errorBox.style.display = "block"; progress.style.display = "none"; }
+        function clearError() { errorBox.style.display = "none"; }
+        function setProgress(text, pct) {
+            progressText.textContent = text;
+            progressFill.style.width = (pct != null ? Math.max(0, Math.min(100, pct)) : 0) + "%";
+            progress.style.display = "flex";
+        }
+        function clearProgress() { progress.style.display = "none"; }
+
+        async function ensureModel() {
+            if (detector) return detector;
+            setProgress("Loading transformers.js…", 0);
+            const t = await import("https://esm.sh/@xenova/transformers@2.17.2");
+            t.env.allowLocalModels = false;
+            setProgress("Loading YOLOS-tiny model (first time only)…", 0);
+            detector = await t.pipeline("object-detection", "Xenova/yolos-tiny", {
+                progress_callback: (info) => {
+                    if (info.status === "progress" && info.file) {
+                        const pct = info.progress != null ? info.progress : 0;
+                        setProgress(`Loading ${info.file}…`, pct);
+                    }
+                },
+            });
+            clearProgress();
+            return detector;
+        }
+
+        const COLORS = ["#06B6D4", "#22C55E", "#F59E0B", "#EC4899", "#8B5CF6", "#EF4444", "#3B82F6"];
+        function colorFor(label) {
+            let h = 0; for (let i = 0; i < label.length; i++) h = (h * 31 + label.charCodeAt(i)) | 0;
+            return COLORS[Math.abs(h) % COLORS.length];
+        }
+
+        function drawDetections(detections) {
+            const ctx = overlay.getContext("2d");
+            const r = video.getBoundingClientRect();
+            overlay.width = r.width; overlay.height = r.height;
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+            const scaleX = r.width / video.videoWidth;
+            const scaleY = r.height / video.videoHeight;
+            ctx.font = "600 14px -apple-system, system-ui, sans-serif";
+            ctx.lineWidth = 3;
+            for (const d of detections) {
+                const x = d.box.xmin * scaleX;
+                const y = d.box.ymin * scaleY;
+                const w = (d.box.xmax - d.box.xmin) * scaleX;
+                const h = (d.box.ymax - d.box.ymin) * scaleY;
+                const col = colorFor(d.label);
+                ctx.strokeStyle = col;
+                ctx.strokeRect(x, y, w, h);
+                const txt = `${d.label} ${(d.score * 100).toFixed(0)}%`;
+                const tw = ctx.measureText(txt).width + 12;
+                ctx.fillStyle = col;
+                ctx.fillRect(x - 1.5, y - 22, tw, 22);
+                ctx.fillStyle = "#000";
+                ctx.fillText(txt, x + 5, y - 6);
+            }
+        }
+
+        async function detectLoop() {
+            const det = await ensureModel();
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            while (running) {
+                if (video.videoWidth === 0) { await new Promise(r => setTimeout(r, 100)); continue; }
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0);
+                const t0 = performance.now();
+                let detections;
+                try {
+                    detections = await det(canvas.toDataURL("image/jpeg", 0.75), { threshold: 0.4, percentage: false });
+                } catch (e) {
+                    console.error(e);
+                    setError("Inference failed: " + (e.message || e));
+                    break;
+                }
+                drawDetections(detections);
+                const dt = performance.now() - t0;
+                const fps = 1000 / Math.max(1, dt);
+                fpsTag.textContent = `${fps.toFixed(1)} fps · ${detections.length} obj`;
+            }
+        }
+
+        startBtn.addEventListener("click", async () => {
+            clearError();
+            if (window.isSecureContext !== true || !navigator.mediaDevices) {
+                setError("Camera requires HTTPS or localhost. Open the site over https://."); return;
+            }
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 640 } } });
+            } catch (e) {
+                setError("Camera permission denied: " + (e.message || e)); return;
+            }
+            video.srcObject = stream;
+            stage.style.display = "block";
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            snapBtn.disabled = false;
+            running = true;
+            detectLoop().catch((e) => setError("Loop crashed: " + (e.message || e)));
+        });
+
+        stopBtn.addEventListener("click", () => {
+            running = false;
+            if (stream) { for (const t of stream.getTracks()) t.stop(); stream = null; }
+            video.srcObject = null;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            snapBtn.disabled = true;
+        });
+
+        snapBtn.addEventListener("click", () => {
+            // Compose video + overlay into a single image, trigger download
+            const r = video.getBoundingClientRect();
+            const c = document.createElement("canvas");
+            c.width = r.width; c.height = r.height;
+            const x = c.getContext("2d");
+            x.drawImage(video, 0, 0, r.width, r.height);
+            x.drawImage(overlay, 0, 0);
+            c.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = `snapshot-${Date.now()}.png`;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+            }, "image/png");
+        });
+    </script>
+</body>
+</html>

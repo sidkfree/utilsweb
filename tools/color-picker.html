@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Color Picker from Image — UtilsWeb</title>
+    <meta name="description" content="Drop a photo, click anywhere to get the exact HEX / RGB / HSL color. Auto-extracts a dominant palette. 100% browser.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <style>
+        .canvas-stage {
+            background: #000;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            margin-top: 14px;
+            border: 1px solid var(--border);
+        }
+        #imgCanvas { display: block; max-width: 100%; height: auto; cursor: crosshair; }
+        .crosshair-tip {
+            position: absolute;
+            pointer-events: none;
+            background: rgba(0,0,0,0.85);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            transform: translate(12px, 12px);
+            display: none;
+        }
+        .swatch-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+        .swatch {
+            flex: 1 1 110px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 12px;
+            color: var(--text-2);
+            cursor: copy;
+        }
+        .swatch:hover { border-color: var(--accent); }
+        .swatch .chip-color {
+            height: 36px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .swatch .hex { color: var(--text); font-weight: 700; letter-spacing: 0.5px; }
+        .picked {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-top: 18px;
+            display: flex; gap: 18px; align-items: center; flex-wrap: wrap;
+        }
+        .picked .preview { width: 86px; height: 86px; border-radius: 12px; border: 1px solid var(--border); }
+        .picked .nums { display: grid; grid-template-columns: auto auto; gap: 4px 16px; font-size: 14px; }
+        .picked .nums strong { color: var(--text); font-family: monospace; }
+        .picked .nums span:nth-child(odd) { color: var(--text-2); }
+        .copy-msg { color: var(--success); font-size: 12px; margin-left: 8px; }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EC4899, #8B5CF6);">🖌️</div>
+                    <div>
+                        <h1>Color Picker from Image</h1>
+                        <p class="tagline">Drop a photo, click anywhere to get the exact HEX, RGB and HSL. Auto-extracts the dominant 8-color palette.</p>
+                    </div>
+                </div>
+
+                <div class="tool-form">
+                    <label>Pick an image</label>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+
+                <div id="stageWrap" class="canvas-stage" style="display:none;">
+                    <canvas id="imgCanvas"></canvas>
+                    <div id="crosshairTip" class="crosshair-tip"></div>
+                </div>
+
+                <div id="pickedBox" class="picked" style="display:none;">
+                    <div class="preview" id="pickedPreview"></div>
+                    <div class="nums">
+                        <span>HEX</span><strong id="hex">—</strong>
+                        <span>RGB</span><strong id="rgb">—</strong>
+                        <span>HSL</span><strong id="hsl">—</strong>
+                    </div>
+                    <div>
+                        <button class="btn primary" id="copyHex" type="button">Copy HEX</button>
+                        <span id="copyMsg" class="copy-msg" style="display:none;">Copied</span>
+                    </div>
+                </div>
+
+                <div id="paletteWrap" style="display:none; margin-top: 20px;">
+                    <label style="color: var(--text-2); font-size: 13px;">Dominant 8-color palette (click any swatch to copy HEX)</label>
+                    <div id="paletteSwatches" class="swatch-row"></div>
+                </div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>Your image is loaded into a hidden <code>&lt;canvas&gt;</code>. Each click reads the exact pixel under the cursor via <code>getImageData()</code> — no server round-trip, no upload. The palette is extracted by quantizing all the pixels into the most common color buckets (a quick median-cut-style grouping over a downsampled copy of the image, runs in &lt; 100 ms on a typical photo).</p>
+                    <p style="margin-top:12px;"><strong>Use cases:</strong> matching brand colors from a screenshot, picking accent colors from a moodboard photo, sampling Pantone-like swatches from product shots, copying HEX values out of a logo without opening Photoshop.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        const fileInput = $("fileInput"), stageWrap = $("stageWrap"), canvas = $("imgCanvas"), tip = $("crosshairTip");
+        const pickedBox = $("pickedBox"), preview = $("pickedPreview"), hexEl = $("hex"), rgbEl = $("rgb"), hslEl = $("hsl");
+        const copyHexBtn = $("copyHex"), copyMsg = $("copyMsg");
+        const paletteWrap = $("paletteWrap"), paletteSwatches = $("paletteSwatches");
+
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        let lastHex = "—";
+
+        function rgbToHex(r, g, b) {
+            return "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("").toUpperCase();
+        }
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) { h = s = 0; }
+            else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+        }
+
+        fileInput.addEventListener("change", () => {
+            const f = fileInput.files && fileInput.files[0];
+            if (!f) return;
+            const url = URL.createObjectURL(f);
+            const img = new Image();
+            img.onload = () => {
+                // Cap canvas at 1600 wide for perf
+                const maxW = 1600;
+                const scale = img.naturalWidth > maxW ? maxW / img.naturalWidth : 1;
+                canvas.width = Math.round(img.naturalWidth * scale);
+                canvas.height = Math.round(img.naturalHeight * scale);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                stageWrap.style.display = "block";
+                pickedBox.style.display = "flex";
+                paletteWrap.style.display = "block";
+                buildPalette();
+                URL.revokeObjectURL(url);
+            };
+            img.onerror = () => alert("Could not decode that image.");
+            img.src = url;
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) * (canvas.width / rect.width));
+            const y = Math.floor((e.clientY - rect.top) * (canvas.height / rect.height));
+            if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) return;
+            const px = ctx.getImageData(x, y, 1, 1).data;
+            const hex = rgbToHex(px[0], px[1], px[2]);
+            tip.style.display = "block";
+            tip.style.left = (e.clientX - rect.left) + "px";
+            tip.style.top = (e.clientY - rect.top) + "px";
+            tip.innerHTML = `<span style="display:inline-block;width:14px;height:14px;background:${hex};border-radius:3px;vertical-align:middle;margin-right:6px;border:1px solid #444;"></span><strong>${hex}</strong>`;
+        });
+        canvas.addEventListener("mouseleave", () => tip.style.display = "none");
+        canvas.addEventListener("click", (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) * (canvas.width / rect.width));
+            const y = Math.floor((e.clientY - rect.top) * (canvas.height / rect.height));
+            const px = ctx.getImageData(x, y, 1, 1).data;
+            const [h, s, l] = rgbToHsl(px[0], px[1], px[2]);
+            lastHex = rgbToHex(px[0], px[1], px[2]);
+            hexEl.textContent = lastHex;
+            rgbEl.textContent = `${px[0]}, ${px[1]}, ${px[2]}`;
+            hslEl.textContent = `${h}°, ${s}%, ${l}%`;
+            preview.style.background = lastHex;
+        });
+
+        copyHexBtn.addEventListener("click", async () => {
+            if (lastHex === "—") return;
+            try {
+                await navigator.clipboard.writeText(lastHex);
+                copyMsg.style.display = "inline";
+                setTimeout(() => copyMsg.style.display = "none", 1500);
+            } catch (e) { /* clipboard blocked */ }
+        });
+
+        function buildPalette() {
+            // Down-sample the canvas to a small ImageData for speed
+            const sample = document.createElement("canvas");
+            const SW = 160;
+            const ratio = SW / canvas.width;
+            sample.width = SW; sample.height = Math.round(canvas.height * ratio);
+            const sctx = sample.getContext("2d", { willReadFrequently: true });
+            sctx.drawImage(canvas, 0, 0, sample.width, sample.height);
+            const data = sctx.getImageData(0, 0, sample.width, sample.height).data;
+
+            // Bucket pixels into a 4-bit-per-channel histogram (4096 buckets)
+            const hist = new Map();
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i + 3] < 128) continue; // skip transparent
+                const r = data[i] & 0xF0;
+                const g = data[i + 1] & 0xF0;
+                const b = data[i + 2] & 0xF0;
+                const key = (r << 16) | (g << 8) | b;
+                hist.set(key, (hist.get(key) || 0) + 1);
+            }
+            // Pick top 8 by count, then merge near-duplicates
+            const sorted = Array.from(hist.entries()).sort((a, b) => b[1] - a[1]);
+            const picks = [];
+            for (const [key] of sorted) {
+                const r = (key >> 16) & 0xFF, g = (key >> 8) & 0xFF, b = key & 0xFF;
+                // Skip if too close to an existing pick
+                if (picks.some(p => Math.abs(p[0] - r) + Math.abs(p[1] - g) + Math.abs(p[2] - b) < 60)) continue;
+                picks.push([r, g, b]);
+                if (picks.length >= 8) break;
+            }
+            paletteSwatches.innerHTML = "";
+            for (const [r, g, b] of picks) {
+                const hex = rgbToHex(r, g, b);
+                const sw = document.createElement("div");
+                sw.className = "swatch";
+                sw.innerHTML = `<div class="chip-color" style="background:${hex};"></div><div class="hex">${hex}</div><div>${r}, ${g}, ${b}</div>`;
+                sw.addEventListener("click", async () => {
+                    try { await navigator.clipboard.writeText(hex); sw.style.borderColor = "var(--success)"; setTimeout(() => sw.style.borderColor = "", 700); } catch (e) {}
+                });
+                paletteSwatches.appendChild(sw);
+            }
+        }
+    })();
+    </script>
+</body>
+</html>

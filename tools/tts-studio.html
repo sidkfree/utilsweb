@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Text-to-Speech Studio — UtilsWeb</title>
+    <meta name="description" content="Type text, pick voice and language, download as MP3. Speech synthesis running fully in your browser.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <style>
+        .progress {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+            padding: 12px 14px; margin-top: 14px; font-size: 13px; color: var(--text-2);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .progress .spinner {
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid var(--text-3); border-top-color: var(--accent);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .progress-bar {
+            margin-top: 8px; height: 6px; background: var(--border);
+            border-radius: 3px; overflow: hidden;
+        }
+        .progress-bar > div {
+            height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            width: 0%; transition: width 0.2s;
+        }
+        textarea#text {
+            width: 100%; min-height: 140px;
+            background: var(--bg-card-2); border: 1px solid var(--border);
+            color: var(--text); border-radius: 10px; padding: 12px 14px;
+            font: inherit; font-size: 14px; line-height: 1.6;
+        }
+        .audio-result {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 16px; margin-top: 18px;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .audio-result audio { width: 100%; }
+        .info-banner {
+            background: rgba(6, 182, 212, 0.08);
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--text-2);
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #DC2626);">🎤</div>
+                    <div>
+                        <h1>Text-to-Speech Studio</h1>
+                        <p class="tagline">Type any text, click Generate, hear it spoken in 60+ languages — all locally in your browser.</p>
+                    </div>
+                </div>
+
+                <div class="tool-form">
+                    <label>Text to speak</label>
+                    <textarea id="text" placeholder="Type or paste a paragraph here…">Hello world! This is UtilsWeb — a privacy-first set of browser tools. Every word you hear was synthesized right here in your tab.</textarea>
+
+                    <div class="row" style="margin-top: 14px;">
+                        <div>
+                            <label>Language</label>
+                            <select id="langSel">
+                                <option value="eng" selected>English</option>
+                                <option value="fra">French</option>
+                                <option value="spa">Spanish</option>
+                                <option value="deu">German</option>
+                                <option value="ita">Italian</option>
+                                <option value="por">Portuguese</option>
+                                <option value="rus">Russian</option>
+                                <option value="ara">Arabic</option>
+                                <option value="hin">Hindi</option>
+                                <option value="cmn">Chinese (Mandarin)</option>
+                                <option value="jpn">Japanese</option>
+                                <option value="kor">Korean</option>
+                                <option value="nld">Dutch</option>
+                                <option value="pol">Polish</option>
+                                <option value="tur">Turkish</option>
+                                <option value="vie">Vietnamese</option>
+                                <option value="ind">Indonesian</option>
+                                <option value="ukr">Ukrainian</option>
+                                <option value="swe">Swedish</option>
+                                <option value="ron">Romanian</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Speed</label>
+                            <select id="speedSel">
+                                <option value="0.85">Slow</option>
+                                <option value="1.0" selected>Normal</option>
+                                <option value="1.15">Fast</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="btn primary" id="genBtn" type="button" style="margin-top: 14px;">🎙️ Generate speech</button>
+                </div>
+
+                <div class="info-banner">
+                    💡 The first generation downloads the MMS-TTS model for your selected language (~50–80 MB) — that's a one-time download cached in your browser. Subsequent generations in the same language are very fast.
+                </div>
+
+                <div id="progress" class="progress" style="display:none;">
+                    <span class="spinner"></span>
+                    <div style="flex:1;">
+                        <div id="progressText">Loading model…</div>
+                        <div class="progress-bar"><div id="progressFill"></div></div>
+                    </div>
+                </div>
+
+                <div id="audioResult" class="audio-result" style="display:none;">
+                    <audio id="audio" controls></audio>
+                    <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                        <a class="btn primary" id="dlBtn" download="speech.wav">⬇ Download WAV</a>
+                        <button class="btn primary" id="regenBtn" type="button">🔄 Regenerate</button>
+                    </div>
+                </div>
+
+                <div id="errorBox" class="error-card" style="display:none; margin-top:14px;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>Meta's <strong>MMS-TTS</strong> model (Massively Multilingual Speech, 1100+ languages) is loaded into your tab via <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">transformers.js</a> + ONNX Runtime Web. The text is tokenised, run through the model on your CPU/GPU, and decoded into a 16 kHz WAV that you can play and download. Your text never leaves the page.</p>
+                    <p style="margin-top:12px;"><strong>Use cases:</strong> voice-over for videos, audiobook drafts, accessibility, learning pronunciation. <strong>Limits:</strong> single fixed voice per language (no voice cloning here); long paragraphs are batched and concatenated.</p>
+                    <p style="margin-top:12px;"><strong>Privacy:</strong> ElevenLabs / OpenAI TTS / Google charge per character and upload your text. This is free and your text/audio stays local.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script type="module">
+        const $ = (id) => document.getElementById(id);
+        const textEl = $("text"), langSel = $("langSel"), speedSel = $("speedSel");
+        const genBtn = $("genBtn"), regenBtn = $("regenBtn");
+        const progress = $("progress"), progressText = $("progressText"), progressFill = $("progressFill");
+        const audioResult = $("audioResult"), audio = $("audio"), dlBtn = $("dlBtn");
+        const errorBox = $("errorBox");
+
+        let cache = {};
+        let lastAudioUrl = null;
+
+        function setError(m) { errorBox.textContent = "⚠ " + m; errorBox.style.display = "block"; progress.style.display = "none"; }
+        function clearError() { errorBox.style.display = "none"; }
+        function setProgress(text, pct) {
+            progressText.textContent = text;
+            progressFill.style.width = (pct != null ? Math.max(0, Math.min(100, pct)) : 0) + "%";
+            progress.style.display = "flex";
+        }
+        function clearProgress() { progress.style.display = "none"; }
+
+        async function ensurePipeline(lang) {
+            if (cache[lang]) return cache[lang];
+            setProgress("Loading transformers.js…", 0);
+            const t = await import("https://esm.sh/@xenova/transformers@2.17.2");
+            t.env.allowLocalModels = false;
+            setProgress(`Loading MMS-TTS model for ${lang} (first time only)…`, 0);
+            const pipe = await t.pipeline("text-to-speech", `Xenova/mms-tts-${lang}`, {
+                progress_callback: (info) => {
+                    if (info.status === "progress" && info.file) {
+                        const pct = info.progress != null ? info.progress : 0;
+                        setProgress(`Loading ${info.file}…`, pct);
+                    }
+                },
+            });
+            cache[lang] = pipe;
+            return pipe;
+        }
+
+        // WAV encoder from Float32 PCM
+        function pcmToWav(samples, sampleRate) {
+            const numChannels = 1;
+            const bitsPerSample = 16;
+            const blockAlign = numChannels * bitsPerSample / 8;
+            const byteRate = sampleRate * blockAlign;
+            const dataSize = samples.length * 2;
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+            function w(off, s) { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); }
+            w(0, "RIFF"); view.setUint32(4, 36 + dataSize, true); w(8, "WAVE");
+            w(12, "fmt "); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true); view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true); view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitsPerSample, true);
+            w(36, "data"); view.setUint32(40, dataSize, true);
+            for (let i = 0; i < samples.length; i++) {
+                const s = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            }
+            return new Blob([buffer], { type: "audio/wav" });
+        }
+
+        async function generate() {
+            clearError();
+            const text = textEl.value.trim();
+            if (!text) { setError("Type some text first."); return; }
+            try {
+                const pipe = await ensurePipeline(langSel.value);
+                setProgress("Synthesising speech…", null);
+                const result = await pipe(text);
+                clearProgress();
+                let samples = result.audio;
+                let sr = result.sampling_rate || 16000;
+                // Apply speed: linear resampling (rough)
+                const speed = parseFloat(speedSel.value);
+                if (speed !== 1.0) {
+                    const newLen = Math.round(samples.length / speed);
+                    const out = new Float32Array(newLen);
+                    for (let i = 0; i < newLen; i++) {
+                        const srcI = i * speed;
+                        const lo = Math.floor(srcI), hi = Math.min(samples.length - 1, lo + 1);
+                        const t = srcI - lo;
+                        out[i] = samples[lo] * (1 - t) + samples[hi] * t;
+                    }
+                    samples = out;
+                }
+                const blob = pcmToWav(samples, sr);
+                if (lastAudioUrl) URL.revokeObjectURL(lastAudioUrl);
+                lastAudioUrl = URL.createObjectURL(blob);
+                audio.src = lastAudioUrl;
+                dlBtn.href = lastAudioUrl;
+                dlBtn.download = `speech-${langSel.value}-${Date.now()}.wav`;
+                audioResult.style.display = "flex";
+                audio.play().catch(() => {});
+            } catch (e) {
+                console.error(e);
+                setError("Synthesis failed: " + (e.message || e));
+            }
+        }
+
+        genBtn.addEventListener("click", generate);
+        regenBtn.addEventListener("click", generate);
+    </script>
+</body>
+</html>

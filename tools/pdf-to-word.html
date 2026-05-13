@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>PDF → Word — UtilsWeb</title>
+    <meta name="description" content="Extract the text from a PDF into a downloadable Word file. 100% browser, no upload.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.5.136/build/pdf.min.mjs" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@9.0.2/build/index.umd.min.js"></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #EF4444);">📄</div>
+                    <div>
+                        <h1>PDF → Word</h1>
+                        <p class="tagline">Extract the text from any PDF and download it as a Word (.docx) file. 100% in your browser.</p>
+                    </div>
+                </div>
+
+                <div class="tool-form">
+                    <label>Pick a PDF file</label>
+                    <input type="file" id="pdfFile" accept="application/pdf,.pdf">
+                    <button class="btn primary" id="goBtn" type="button">Extract to .docx</button>
+                </div>
+
+                <div id="status" class="result-card" style="display:none;"></div>
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+                <div id="resultBox" class="result-card" style="display:none; flex-direction:column; align-items:flex-start;">
+                    <p>✓ Done — your <code>.docx</code> is ready.</p>
+                    <a class="btn primary" id="dlBtn" download="extracted.docx">⬇ Download .docx</a>
+                </div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>The PDF is parsed in your browser using <a href="https://mozilla.github.io/pdf.js/" target="_blank" rel="noopener">PDF.js</a>. Each page's text is read top-to-bottom and written into a fresh Word document with the <a href="https://docx.js.org/" target="_blank" rel="noopener">docx</a> library. The file never reaches any server — close this tab and it's gone.</p>
+                    <p style="margin-top:12px;"><strong>Scope:</strong> this is a <em>text-only</em> conversion. Fonts, exact layout, images, multi-column flow and embedded tables are not preserved — that level of fidelity needs Microsoft Word's own "Save as DOCX" feature. For privacy-sensitive copy of the text content, this tool is faster and 100% private.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script type="module">
+    import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.5.136/build/pdf.min.mjs';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs';
+
+    const $ = (id) => document.getElementById(id);
+    const fileIn = $("pdfFile"), goBtn = $("goBtn");
+    const statusBox = $("status"), errorBox = $("errorBox"), resultBox = $("resultBox"), dlBtn = $("dlBtn");
+
+    function setStatus(msg) { statusBox.textContent = msg; statusBox.style.display = "block"; errorBox.style.display = "none"; resultBox.style.display = "none"; }
+    function setError(msg) { errorBox.textContent = "⚠ " + msg; errorBox.style.display = "block"; statusBox.style.display = "none"; }
+
+    goBtn.addEventListener("click", async () => {
+        const f = fileIn.files && fileIn.files[0];
+        if (!f) { setError("Pick a PDF file first."); return; }
+        if (!window.docx) { setError("docx library not loaded yet, please retry."); return; }
+
+        try {
+            setStatus("Reading PDF…");
+            const buf = await f.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+            const numPages = pdf.numPages;
+
+            const { Document, Packer, Paragraph, TextRun, PageBreak, HeadingLevel } = window.docx;
+            const children = [];
+
+            for (let p = 1; p <= numPages; p++) {
+                setStatus(`Reading PDF — page ${p}/${numPages}…`);
+                const page = await pdf.getPage(p);
+                const tc = await page.getTextContent();
+                // Group text by approximate line (y coordinate)
+                const lines = new Map();
+                for (const it of tc.items) {
+                    const y = Math.round(it.transform[5]);
+                    const arr = lines.get(y) || [];
+                    arr.push({ x: it.transform[4], s: it.str });
+                    lines.set(y, arr);
+                }
+                // Sort top-to-bottom (higher y first), then left-to-right
+                const sortedY = Array.from(lines.keys()).sort((a, b) => b - a);
+                for (const y of sortedY) {
+                    const items = lines.get(y).sort((a, b) => a.x - b.x);
+                    const text = items.map(i => i.s).join(" ").replace(/\s+/g, " ").trim();
+                    if (text.length === 0) continue;
+                    children.push(new Paragraph({ children: [new TextRun(text)] }));
+                }
+                if (p < numPages) {
+                    children.push(new Paragraph({ children: [new PageBreak()] }));
+                }
+            }
+
+            setStatus("Writing Word document…");
+            const doc = new Document({ sections: [{ properties: {}, children }] });
+            const blob = await Packer.toBlob(doc);
+            const baseName = f.name.replace(/\.pdf$/i, "") || "extracted";
+            const url = URL.createObjectURL(blob);
+            dlBtn.href = url;
+            dlBtn.download = baseName + ".docx";
+            statusBox.style.display = "none";
+            resultBox.style.display = "flex";
+        } catch (e) {
+            console.error(e);
+            setError("Conversion failed: " + (e.message || e));
+        }
+    });
+    </script>
+</body>
+</html>

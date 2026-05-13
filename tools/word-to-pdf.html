@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Word → PDF — UtilsWeb</title>
+    <meta name="description" content="Convert a Word .docx file to PDF, right in your browser. No upload, no signup.">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/svg+xml" href="../static/favicon.svg">
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="../"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="../">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="../">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #10B981, #06B6D4);">📑</div>
+                    <div>
+                        <h1>Word → PDF</h1>
+                        <p class="tagline">Render a Word (.docx) file to PDF — headings, lists, tables, links preserved. 100% in your browser.</p>
+                    </div>
+                </div>
+
+                <div class="tool-form">
+                    <label>Pick a .docx file</label>
+                    <input type="file" id="docxFile" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+
+                    <div class="row">
+                        <div>
+                            <label>Page format</label>
+                            <select id="pageFormat">
+                                <option value="A4" selected>A4</option>
+                                <option value="letter">US Letter</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Margin (mm)</label>
+                            <input type="number" id="margin" value="15" min="0" max="50">
+                        </div>
+                    </div>
+
+                    <button class="btn primary" id="goBtn" type="button">Convert &amp; open print dialog</button>
+                </div>
+
+                <div id="status" class="result-card" style="display:none;"></div>
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+                <div id="resultBox" class="result-card" style="display:none; flex-direction:column; align-items:flex-start; gap:12px;">
+                    <p>✓ Document ready. The print dialog should have opened — choose <strong>Save as PDF</strong> as the destination.</p>
+                    <button class="btn primary" id="reprintBtn" type="button">Re-open print dialog</button>
+                </div>
+
+                <div id="previewWrap" style="display:none; margin-top:24px;">
+                    <h3 style="font-size:15px; color:var(--text-2); margin-bottom:10px;">Preview (rendered HTML — scroll to view full document)</h3>
+                    <div id="preview" style="background:#fff; color:#000; padding:24px; border-radius:14px; max-height:560px; overflow:auto; line-height:1.55;"></div>
+                </div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>Your <code>.docx</code> is unpacked in your browser with <a href="https://github.com/mwilliamson/mammoth.js" target="_blank" rel="noopener">mammoth.js</a> (it understands the Word XML format) and rendered to clean HTML. The HTML is then opened in the browser's native print pipeline — pick <em>Save as PDF</em> in the print dialog to download. This avoids the canvas-rasterization limits that break very long documents (40+ pages), and the resulting PDF has selectable, searchable text.</p>
+                    <p style="margin-top:12px;"><strong>Scope:</strong> Headings, paragraphs, bold/italic, bullet/numbered lists, tables, hyperlinks and images embedded in the docx are preserved. Complex Word features (multi-column layouts, text boxes, watermarks, embedded fonts, smart art) may degrade. For pixel-perfect Office output, use Word's own <em>Save as PDF</em>.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        const fileIn = $("docxFile"), goBtn = $("goBtn"), fmt = $("pageFormat"), marginIn = $("margin");
+        const statusBox = $("status"), errorBox = $("errorBox"), resultBox = $("resultBox"), reprintBtn = $("reprintBtn");
+        const previewWrap = $("previewWrap"), preview = $("preview");
+
+        let printFrame = null;
+        let printFileName = null;
+        const ORIGINAL_TITLE = document.title;
+
+        function setStatus(m) { statusBox.textContent = m; statusBox.style.display = "block"; errorBox.style.display = "none"; resultBox.style.display = "none"; }
+        function setError(m) { errorBox.textContent = "⚠ " + m; errorBox.style.display = "block"; statusBox.style.display = "none"; }
+
+        function buildPrintHtml(bodyHtml, fileName, pageFormat, margin) {
+            const css = `
+                @page { size: ${pageFormat}; margin: ${margin}mm; }
+                * { box-sizing: border-box; }
+                html, body { margin: 0; padding: 0; background: #ffffff; color: #000000; }
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+                    font-size: 11pt;
+                    line-height: 1.55;
+                }
+                h1 { font-size: 22pt; margin: 0.6em 0 0.4em; font-weight: 700; }
+                h2 { font-size: 18pt; margin: 0.7em 0 0.35em; font-weight: 700; }
+                h3 { font-size: 14pt; margin: 0.8em 0 0.3em; font-weight: 600; }
+                h4, h5, h6 { font-size: 12pt; margin: 0.9em 0 0.25em; font-weight: 600; }
+                p { margin: 0.5em 0; }
+                ul, ol { margin: 0.4em 0; padding-left: 26px; }
+                li { margin: 0.15em 0; }
+                table { border-collapse: collapse; width: 100%; margin: 0.6em 0; }
+                td, th { border: 1px solid #999; padding: 5px 8px; vertical-align: top; }
+                img { max-width: 100%; height: auto; }
+                a { color: #0645ad; text-decoration: underline; }
+                table, figure, img, h1, h2, h3 { page-break-inside: avoid; break-inside: avoid; }
+                h1, h2, h3, h4 { page-break-after: avoid; break-after: avoid; }
+                pre, code { font-family: 'Menlo', 'Consolas', monospace; font-size: 10pt; }
+                pre { white-space: pre-wrap; background: #f4f4f4; padding: 8px; border-radius: 4px; }
+            `;
+            return `<!doctype html><html><head><meta charset="utf-8"><title>${fileName.replace(/[<>&]/g, "")}</title><style>${css}</style></head><body>${bodyHtml}</body></html>`;
+        }
+
+        function waitForImages(doc) {
+            const imgs = Array.from(doc.images || []);
+            if (imgs.length === 0) return Promise.resolve();
+            return Promise.all(imgs.map(img => {
+                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                return new Promise(res => {
+                    img.addEventListener("load", res, { once: true });
+                    img.addEventListener("error", res, { once: true });
+                });
+            }));
+        }
+
+        function openPrint() {
+            if (!printFrame || !printFrame.contentWindow) { setError("Convert a document first."); return; }
+            // Chrome derives the PDF filename from the *parent* document's title when
+            // printing via an iframe, ignoring the iframe's own title. Workaround: swap
+            // the parent title to the source .docx name around the print() call.
+            const restore = () => { document.title = ORIGINAL_TITLE; };
+            try {
+                if (printFileName) document.title = printFileName;
+                window.addEventListener("focus", restore, { once: true });
+                setTimeout(restore, 4000);
+                printFrame.contentWindow.focus();
+                printFrame.contentWindow.print();
+            } catch (e) {
+                restore();
+                setError("Print failed: " + (e.message || e));
+            }
+        }
+
+        goBtn.addEventListener("click", async () => {
+            const f = fileIn.files && fileIn.files[0];
+            if (!f) { setError("Pick a .docx file first."); return; }
+            if (!window.mammoth) { setError("Library still loading, retry in a second."); return; }
+
+            try {
+                setStatus("Reading .docx…");
+                const buf = await f.arrayBuffer();
+                const result = await window.mammoth.convertToHtml(
+                    { arrayBuffer: buf },
+                    { convertImage: window.mammoth.images.imgElement(image => image.read("base64").then(b64 => ({ src: "data:" + image.contentType + ";base64," + b64 }))) }
+                );
+                const html = result.value || "<p><em>(empty document)</em></p>";
+
+                // On-screen preview (UI only)
+                preview.innerHTML = html;
+                previewWrap.style.display = "block";
+
+                setStatus("Preparing print dialog…");
+
+                // Tear down any previous frame
+                if (printFrame) { printFrame.remove(); printFrame = null; }
+
+                const margin = Math.max(0, Math.min(50, parseInt(marginIn.value, 10) || 15));
+                const fileName = (f.name.replace(/\.docx$/i, "") || "document");
+                printFileName = fileName;
+                const fullHtml = buildPrintHtml(html, fileName, fmt.value, margin);
+
+                // Off-screen iframe used for the native print pipeline. Browser handles
+                // pagination internally — no canvas limit, output PDF has selectable text.
+                printFrame = document.createElement("iframe");
+                printFrame.setAttribute("aria-hidden", "true");
+                printFrame.style.cssText = "position:fixed; right:0; bottom:0; width:0; height:0; border:0; visibility:hidden;";
+                document.body.appendChild(printFrame);
+
+                const doc = printFrame.contentDocument || printFrame.contentWindow.document;
+                doc.open();
+                doc.write(fullHtml);
+                doc.close();
+
+                // Give the frame time to lay out and load base64 images
+                await new Promise(r => (printFrame.onload ? (printFrame.onload = r) : setTimeout(r, 80)));
+                await waitForImages(doc);
+                // Give layout a final tick
+                await new Promise(r => setTimeout(r, 120));
+
+                statusBox.style.display = "none";
+                resultBox.style.display = "flex";
+
+                // Trigger native print dialog
+                openPrint();
+            } catch (e) {
+                console.error(e);
+                setError("Conversion failed: " + (e.message || e));
+            }
+        });
+
+        reprintBtn.addEventListener("click", openPrint);
+    })();
+    </script>
+</body>
+</html>
