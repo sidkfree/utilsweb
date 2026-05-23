@@ -62,6 +62,16 @@ window.UTILSWEB_TOOLS = [
 
     // ── Images & Vision ───────────────────────────────────────
     {
+        slug: "smart-cropper",
+        name: "Smart Social Cropper",
+        tagline: "Auto-crop any photo for TikTok, Reels, Instagram, YouTube — face-aware AI keeps your subject in frame.",
+        icon: "✂️",
+        color: "linear-gradient(135deg, #EC4899, #8B5CF6)",
+        path: "tools/smart-cropper.html",
+        category: "images",
+        badge: "new",
+    },
+    {
         slug: "image-compressor",
         name: "Image Compressor",
         tagline: "Shrink JPG / PNG / WebP. Quality slider, optional resize.",

@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Smart Social Cropper — UtilsWeb</title>
+    <meta name="description" content="Auto-crop any photo for TikTok, Reels, Instagram, YouTube. Face-aware AI keeps the subject in frame. 100% browser, no upload.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js"></script>
+
+    <style>
+        .upload-zone{
+            border:2px dashed rgba(255,255,255,.18);
+            border-radius:18px;
+            padding:48px 24px;
+            text-align:center;
+            background:rgba(255,255,255,.02);
+            transition:background .15s, border-color .15s;
+            cursor:pointer;
+        }
+        .upload-zone:hover, .upload-zone.drag{
+            border-color:#EC4899;
+            background:rgba(236,72,153,.06);
+        }
+        .upload-zone .big{font-size:46px; margin-bottom:8px;}
+        .upload-zone p{margin:6px 0; color:#9CA3AF;}
+        .upload-zone input{display:none;}
+
+        .format-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
+            gap:10px;
+            margin:18px 0;
+        }
+        .format-btn{
+            background:rgba(255,255,255,.04);
+            border:1.5px solid rgba(255,255,255,.08);
+            border-radius:14px;
+            padding:12px 8px;
+            cursor:pointer;
+            transition:all .15s;
+            text-align:center;
+            color:#fff;
+            font-family:inherit;
+        }
+        .format-btn:hover{
+            border-color:#EC4899;
+            background:rgba(236,72,153,.08);
+        }
+        .format-btn.active{
+            border-color:#EC4899;
+            background:linear-gradient(135deg, rgba(236,72,153,.18), rgba(139,92,246,.18));
+            box-shadow:0 0 18px rgba(236,72,153,.25);
+        }
+        .format-btn .shape{
+            margin:0 auto 8px;
+            background:linear-gradient(135deg, #EC4899, #8B5CF6);
+            border-radius:6px;
+            opacity:.85;
+        }
+        .format-btn .label{font-size:13px; font-weight:700; margin-top:4px;}
+        .format-btn .ratio{font-size:11px; color:#9CA3AF; margin-top:2px;}
+
+        .preview-wrap{
+            margin-top:18px;
+            background:#000;
+            border-radius:18px;
+            overflow:hidden;
+            position:relative;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            min-height:280px;
+        }
+        .preview-wrap canvas{
+            max-width:100%;
+            max-height:60vh;
+            display:block;
+        }
+        .preview-placeholder{
+            color:#6B7280; font-size:14px;
+        }
+
+        .controls{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            margin-top:14px;
+            justify-content:center;
+        }
+        .controls .pill{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            padding:8px 14px;
+            border-radius:999px;
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.08);
+            color:#fff;
+            font-size:13px;
+            cursor:pointer;
+            transition:background .15s;
+        }
+        .controls .pill:hover{background:rgba(236,72,153,.12);}
+        .info-line{color:#9CA3AF; font-size:13px; text-align:center; margin-top:10px;}
+
+        .nudge{display:flex; gap:8px; align-items:center; justify-content:center; margin-top:8px;}
+        .nudge button{
+            width:34px; height:34px; border-radius:50%;
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.08);
+            color:#fff; cursor:pointer; font-size:16px;
+        }
+        .nudge button:hover{background:rgba(236,72,153,.18);}
+        .nudge .lbl{color:#9CA3AF; font-size:12px;}
+
+        .face-badge{
+            position:absolute; top:10px; right:12px;
+            background:rgba(0,0,0,.65); backdrop-filter:blur(8px);
+            color:#fff; font-size:11px; font-weight:700;
+            padding:5px 10px; border-radius:999px;
+            border:1px solid rgba(236,72,153,.5);
+        }
+        .face-badge.no-face{border-color:rgba(255,255,255,.18);}
+        @media(max-width:700px){.format-grid{grid-template-columns:repeat(3, 1fr);}}
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EC4899, #8B5CF6);">✂️</div>
+                    <div>
+                        <h1>Smart Social Cropper</h1>
+                        <p class="tagline">Auto-crop any photo for TikTok, Reels, Instagram, YouTube — face-aware AI keeps your subject in frame. 100% in-browser.</p>
+                    </div>
+                </div>
+
+                <div class="upload-zone" id="upZone">
+                    <div class="big">🖼️</div>
+                    <p><strong>Drop a photo</strong> or click to browse</p>
+                    <p style="font-size:12px;">JPG, PNG, WebP — handled entirely in your browser</p>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+
+                <div id="workspace" style="display:none; margin-top:22px;">
+                    <h3 style="margin:6px 0 10px; font-size:15px; color:#9CA3AF; text-transform:uppercase; letter-spacing:.8px;">Choose a format</h3>
+                    <div class="format-grid" id="formatGrid"></div>
+
+                    <div class="preview-wrap">
+                        <span id="faceBadge" class="face-badge no-face" style="display:none;">👤 no face detected</span>
+                        <canvas id="canvas" style="display:none;"></canvas>
+                        <div class="preview-placeholder" id="placeholder">Pick a format above to preview the crop.</div>
+                    </div>
+
+                    <div class="nudge" id="nudgeWrap" style="display:none;">
+                        <span class="lbl">Nudge crop:</span>
+                        <button id="nudgeUp"   title="Up">↑</button>
+                        <button id="nudgeDown" title="Down">↓</button>
+                        <button id="nudgeLeft" title="Left">←</button>
+                        <button id="nudgeRight" title="Right">→</button>
+                        <button id="nudgeReset" title="Reset to center on face">⟲</button>
+                    </div>
+
+                    <div class="controls" id="actions" style="display:none;">
+                        <a class="btn primary" id="dlBtn" download>⬇ Download JPG</a>
+                        <button class="btn" id="dlPng" type="button">⬇ Download PNG</button>
+                        <button class="btn" id="resetBtn" type="button">↻ New image</button>
+                    </div>
+                    <div class="info-line" id="infoLine"></div>
+                </div>
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+                    <p>This page loads <a href="https://google.github.io/mediapipe/solutions/face_detection.html" target="_blank" rel="noopener">MediaPipe Face Detection</a> in your browser via WebAssembly. When you drop a photo, the model finds the face (or main subject) on your device — no server, no upload — and centers the crop window around it. The canvas then renders the chosen aspect ratio and offers an instant JPG/PNG download. The file never leaves your machine.</p>
+                    <p style="margin-top:10px;"><strong>Group photos:</strong> the crop is centered on the centroid of all detected faces, so everyone stays in frame.</p>
+                    <p style="margin-top:10px;"><strong>No face?</strong> The tool falls back to a smart centered crop and lets you nudge it with arrows.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        const upZone = $("upZone"), fileInput = $("fileInput"), workspace = $("workspace");
+        const formatGrid = $("formatGrid"), canvas = $("canvas"), ctx = canvas.getContext("2d");
+        const placeholder = $("placeholder"), actions = $("actions"), dlBtn = $("dlBtn"), dlPng = $("dlPng");
+        const resetBtn = $("resetBtn"), infoLine = $("infoLine"), errorBox = $("errorBox");
+        const faceBadge = $("faceBadge"), nudgeWrap = $("nudgeWrap");
+
+        const FORMATS = [
+            { key: "1:1",    label: "Instagram",    ratio: 1.0,        sub: "1:1 square",       w: 50, h: 50 },
+            { key: "4:5",    label: "IG Portrait",  ratio: 4/5,        sub: "4:5",              w: 44, h: 55 },
+            { key: "9:16",   label: "TikTok / Reels", ratio: 9/16,     sub: "9:16",             w: 36, h: 64 },
+            { key: "16:9",   label: "YouTube",      ratio: 16/9,       sub: "16:9 thumbnail",   w: 72, h: 40 },
+            { key: "1.91:1", label: "Facebook",     ratio: 1.91,       sub: "1.91:1 link",      w: 70, h: 37 },
+            { key: "2:3",    label: "Pinterest",    ratio: 2/3,        sub: "2:3",              w: 44, h: 66 },
+        ];
+
+        let srcImg = null;         // HTMLImageElement loaded
+        let faceCenter = null;     // {x, y} in image coords, normalized 0..1 (centroid of faces)
+        let curFormat = null;
+        let nudgeX = 0, nudgeY = 0; // px offsets
+
+        // ── Render format buttons ──
+        function renderFormats() {
+            formatGrid.innerHTML = "";
+            FORMATS.forEach((f) => {
+                const b = document.createElement("button");
+                b.className = "format-btn";
+                b.dataset.key = f.key;
+                const shape = document.createElement("div");
+                shape.className = "shape";
+                shape.style.width = f.w + "px";
+                shape.style.height = f.h + "px";
+                b.appendChild(shape);
+                const label = document.createElement("div");
+                label.className = "label";
+                label.textContent = f.label;
+                b.appendChild(label);
+                const sub = document.createElement("div");
+                sub.className = "ratio";
+                sub.textContent = f.sub;
+                b.appendChild(sub);
+                b.addEventListener("click", () => selectFormat(f));
+                formatGrid.appendChild(b);
+            });
+        }
+        renderFormats();
+
+        // ── Drag & drop ──
+        ["dragenter", "dragover"].forEach(ev => {
+            upZone.addEventListener(ev, (e) => {
+                e.preventDefault(); upZone.classList.add("drag");
+            });
+        });
+        ["dragleave", "drop"].forEach(ev => {
+            upZone.addEventListener(ev, (e) => {
+                e.preventDefault(); upZone.classList.remove("drag");
+            });
+        });
+        upZone.addEventListener("click", () => fileInput.click());
+        upZone.addEventListener("drop", (e) => {
+            const f = e.dataTransfer.files && e.dataTransfer.files[0];
+            if (f) handleFile(f);
+        });
+        fileInput.addEventListener("change", () => {
+            if (fileInput.files && fileInput.files[0]) handleFile(fileInput.files[0]);
+        });
+
+        async function handleFile(file) {
+            try {
+                errorBox.style.display = "none";
+                if (!file.type.startsWith("image/")) {
+                    throw new Error("Please pick an image file.");
+                }
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                await new Promise((res, rej) => {
+                    img.onload = res;
+                    img.onerror = () => rej(new Error("Could not decode image."));
+                    img.src = url;
+                });
+                srcImg = img;
+                workspace.style.display = "block";
+                placeholder.style.display = "block";
+                placeholder.textContent = "Detecting face…";
+                canvas.style.display = "none";
+                actions.style.display = "none";
+                nudgeWrap.style.display = "none";
+                faceBadge.style.display = "none";
+                nudgeX = nudgeY = 0;
+                curFormat = null;
+                document.querySelectorAll(".format-btn").forEach(b => b.classList.remove("active"));
+
+                faceCenter = await detectFaces(img);
+                if (faceCenter && faceCenter.count > 0) {
+                    faceBadge.textContent = "👤 " + faceCenter.count + " face" + (faceCenter.count > 1 ? "s" : "") + " detected";
+                    faceBadge.classList.remove("no-face");
+                } else {
+                    faceBadge.textContent = "👤 no face — using centered crop";
+                    faceBadge.classList.add("no-face");
+                    faceCenter = { nx: 0.5, ny: 0.5, count: 0 };
+                }
+                faceBadge.style.display = "inline-block";
+                placeholder.textContent = "Pick a format above to preview the crop.";
+
+                // Auto-pick a sensible default — TikTok/Reels (most common for casual users)
+                selectFormat(FORMATS[2]);
+            } catch (err) {
+                showError(err.message || String(err));
+            }
+        }
+
+        // ── MediaPipe face detection ──
+        let detector = null;
+        let modelLoadingPromise = null;
+        async function ensureDetector() {
+            if (detector) return detector;
+            if (modelLoadingPromise) return modelLoadingPromise;
+            modelLoadingPromise = (async () => {
+                if (!window.FaceDetection) {
+                    throw new Error("Face Detection model failed to load (check your connection).");
+                }
+                const fd = new window.FaceDetection({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
+                });
+                fd.setOptions({ model: "short", minDetectionConfidence: 0.5 });
+                await fd.initialize();
+                detector = fd;
+                return fd;
+            })();
+            return modelLoadingPromise;
+        }
+
+        async function detectFaces(img) {
+            try {
+                const fd = await ensureDetector();
+                return await new Promise((resolve) => {
+                    fd.onResults((res) => {
+                        if (res.detections && res.detections.length > 0) {
+                            // centroid of bbox centers
+                            let sx = 0, sy = 0;
+                            res.detections.forEach((d) => {
+                                const bb = d.boundingBox;
+                                // boundingBox.xCenter / yCenter are already normalized 0..1
+                                sx += bb.xCenter;
+                                sy += bb.yCenter;
+                            });
+                            const nx = sx / res.detections.length;
+                            const ny = sy / res.detections.length;
+                            resolve({ nx, ny, count: res.detections.length });
+                        } else {
+                            resolve({ nx: 0.5, ny: 0.5, count: 0 });
+                        }
+                    });
+                    fd.send({ image: img });
+                });
+            } catch (e) {
+                console.warn("Face detection failed, falling back to center:", e);
+                return { nx: 0.5, ny: 0.5, count: 0 };
+            }
+        }
+
+        // ── Crop + render ──
+        function selectFormat(fmt) {
+            curFormat = fmt;
+            nudgeX = nudgeY = 0;
+            document.querySelectorAll(".format-btn").forEach(b => {
+                b.classList.toggle("active", b.dataset.key === fmt.key);
+            });
+            renderCrop();
+        }
+
+        function renderCrop() {
+            if (!srcImg || !curFormat) return;
+            const iw = srcImg.naturalWidth, ih = srcImg.naturalHeight;
+            const ratio = curFormat.ratio;
+            // Compute the largest crop window inside the image that matches ratio
+            let cw, ch;
+            if (iw / ih > ratio) {
+                ch = ih; cw = Math.round(ih * ratio);
+            } else {
+                cw = iw; ch = Math.round(iw / ratio);
+            }
+            // Center crop window on face centroid (normalized), then clamp
+            const fx = (faceCenter ? faceCenter.nx : 0.5) * iw;
+            const fy = (faceCenter ? faceCenter.ny : 0.5) * ih;
+            let cx = Math.round(fx - cw / 2) + nudgeX;
+            let cy = Math.round(fy - ch / 2) + nudgeY;
+            cx = Math.max(0, Math.min(iw - cw, cx));
+            cy = Math.max(0, Math.min(ih - ch, cy));
+
+            canvas.width = cw;
+            canvas.height = ch;
+            ctx.drawImage(srcImg, cx, cy, cw, ch, 0, 0, cw, ch);
+            canvas.style.display = "block";
+            placeholder.style.display = "none";
+            actions.style.display = "flex";
+            nudgeWrap.style.display = "flex";
+            infoLine.textContent = `${cw} × ${ch} px — ${curFormat.label} (${curFormat.sub})`;
+            updateDownloadHrefs(curFormat);
+        }
+
+        function updateDownloadHrefs(fmt) {
+            const base = "smart-crop_" + fmt.key.replace(":", "x");
+            dlBtn.href = canvas.toDataURL("image/jpeg", 0.92);
+            dlBtn.download = base + ".jpg";
+            dlPng.onclick = () => {
+                const a = document.createElement("a");
+                a.href = canvas.toDataURL("image/png");
+                a.download = base + ".png";
+                a.click();
+            };
+        }
+
+        // ── Nudge controls ──
+        const NUDGE = 30;
+        $("nudgeUp").onclick    = () => { nudgeY -= NUDGE; renderCrop(); };
+        $("nudgeDown").onclick  = () => { nudgeY += NUDGE; renderCrop(); };
+        $("nudgeLeft").onclick  = () => { nudgeX -= NUDGE; renderCrop(); };
+        $("nudgeRight").onclick = () => { nudgeX += NUDGE; renderCrop(); };
+        $("nudgeReset").onclick = () => { nudgeX = 0; nudgeY = 0; renderCrop(); };
+
+        resetBtn.onclick = () => {
+            srcImg = null; faceCenter = null; curFormat = null;
+            workspace.style.display = "none";
+            fileInput.value = "";
+        };
+
+        function showError(msg) {
+            errorBox.textContent = msg;
+            errorBox.style.display = "block";
+        }
+    })();
+    </script>
+</body>
+</html>
