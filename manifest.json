@@ -1,0 +1,14 @@
+{
+  "name": "UtilsWeb",
+  "short_name": "UtilsWeb",
+  "description": "156+ free browser-only utilities — PDF, image, audio, video, finance, health, SEO, crypto, design, dev tools.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#06B6D4",
+  "background_color": "#050511",
+  "icons": [
+    { "src": "/static/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
