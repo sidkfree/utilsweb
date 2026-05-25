@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Text ⇄ Hex — UtilsWeb</title>
+    <meta name="description" content="Convert text to / from hexadecimal (UTF-8 bytes).">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #3B82F6, #8B5CF6);">🔣</div>
+                    <div>
+                        <h1>Text ⇄ Hex</h1>
+                        <p class="tagline">Convert text to / from hexadecimal (UTF-8 bytes).</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:flex;gap:18px;">
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="radio" name="m" value="enc" checked> Text → Hex</label>
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="radio" name="m" value="dec"> Hex → Text</label>
+                    </div>
+                    <label style="margin-top:10px;">Input</label>
+                    <textarea id="inp" rows="6" placeholder="Hello" style="font-family:ui-monospace,monospace;"></textarea>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Run</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="6" readonly style="font-family:ui-monospace,monospace;"></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Two hex digits = one UTF-8 byte. Spaces and 0x prefixes are stripped before decoding.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("runBtn").addEventListener("click", () => {
+            clearError();
+            const mode = document.querySelector('input[name="m"]:checked').value;
+            const v = $("inp").value;
+            try {
+                if (mode === "enc") {
+                    $("out").value = [...new TextEncoder().encode(v)].map(b => b.toString(16).padStart(2, "0")).join(" ");
+                } else {
+                    const cleaned = v.replace(/[^0-9a-fA-F]/g, "");
+                    if (cleaned.length % 2 !== 0) throw new Error("Hex length must be even.");
+                    const bytes = [];
+                    for (let i = 0; i < cleaned.length; i += 2) bytes.push(parseInt(cleaned.slice(i, i+2), 16));
+                    $("out").value = new TextDecoder().decode(new Uint8Array(bytes));
+                }
+                $("resultBox").style.display = "flex";
+            } catch (e) { showError(e.message); }
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

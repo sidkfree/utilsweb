@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Focal Length Equivalent — UtilsWeb</title>
+    <meta name="description" content="Convert a lens's focal length between sensor formats (FF, APS-C, M4/3…).">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #A855F7, #EC4899);">🔭</div>
+                    <div>
+                        <h1>Focal Length Equivalent</h1>
+                        <p class="tagline">Convert a lens's focal length between sensor formats (FF, APS-C, M4/3…).</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Actual focal (mm)</label><input type="number" id="f" value="50"></div>
+                        <div>
+                            <label>From sensor</label>
+                            <select id="s1"><option value="1" selected>Full-frame</option><option value="1.5">APS-C (Nikon/Fuji)</option><option value="1.6">APS-C (Canon)</option><option value="2">Micro 4/3</option><option value="2.7">1"</option></select>
+                        </div>
+                        <div>
+                            <label>To sensor</label>
+                            <select id="s2"><option value="1">Full-frame</option><option value="1.5" selected>APS-C (Nikon/Fuji)</option><option value="1.6">APS-C (Canon)</option><option value="2">Micro 4/3</option><option value="2.7">1"</option></select>
+                        </div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div><strong id="r" style="font-size:30px;color:#A855F7;"></strong></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Equivalent focal = actual × crop factor. The result is what the field-of-view would look like on the target sensor.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const f = +$("f").value, s1 = +$("s1").value, s2 = +$("s2").value;
+            const ff = f * s1;          // equivalent on full-frame
+            const out = ff / s2;        // back to target sensor's "actual focal"
+            $("r").textContent = `${ff.toFixed(1)} mm FF equiv. · ${out.toFixed(1)} mm on target sensor`;
+        }
+        ["f","s1","s2"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

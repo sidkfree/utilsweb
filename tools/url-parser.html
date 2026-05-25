@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>URL Parser — UtilsWeb</title>
+    <meta name="description" content="Break a URL into protocol, host, port, path, query, fragment.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #84CC16, #14B8A6);">🧩</div>
+                    <div>
+                        <h1>URL Parser</h1>
+                        <p class="tagline">Break a URL into protocol, host, port, path, query, fragment.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>URL</label>
+                    <input type="text" id="u" value="https://user:pass@utilsweb.com:443/tools?q=hash&n=10#section">
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;">
+                    <table style="width:100%;font-size:13px;"><tbody id="rows"></tbody></table>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Native <code>URL</code> + <code>URLSearchParams</code> — same parser the browser uses for <code>fetch()</code>.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function paint() {
+            const v = $("u").value;
+            try {
+                const x = new URL(v);
+                const rows = [
+                    ["Protocol", x.protocol],
+                    ["Username", x.username],
+                    ["Password", x.password ? "•".repeat(x.password.length) : ""],
+                    ["Hostname", x.hostname],
+                    ["Port",     x.port || "(default)"],
+                    ["Pathname", x.pathname],
+                    ["Search",   x.search],
+                    ["Hash",     x.hash],
+                    ["Origin",   x.origin],
+                ];
+                let html = rows.map(([k, v]) => `<tr><td style='padding:6px;color:#9aa1b6;'>${k}</td><td style='text-align:right;padding:6px;font-family:ui-monospace,monospace;color:#06B6D4;'>${v || ""}</td></tr>`).join("");
+                if (x.searchParams.size) {
+                    html += `<tr><td colspan='2' style='padding:8px 6px 4px;color:#9aa1b6;'>Query parameters</td></tr>`;
+                    for (const [k, val] of x.searchParams) html += `<tr><td style='padding:4px 6px;color:#9aa1b6;font-family:ui-monospace,monospace;'>&nbsp;&nbsp;${k}</td><td style='text-align:right;padding:4px 6px;font-family:ui-monospace,monospace;color:#10B981;'>${val}</td></tr>`;
+                }
+                $("rows").innerHTML = html;
+            } catch (e) {
+                $("rows").innerHTML = `<tr><td style='padding:6px;color:#EF4444;'>Invalid URL</td></tr>`;
+            }
+        }
+        $("u").addEventListener("input", paint);
+        paint();
+
+    })();
+    </script>
+</body>
+</html>

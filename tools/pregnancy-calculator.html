@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Pregnancy Due Date Calculator — UtilsWeb</title>
+    <meta name="description" content="Estimated due date and trimester breakdown — based on your LMP.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #EC4899);">🤰</div>
+                    <div>
+                        <h1>Pregnancy Due Date Calculator</h1>
+                        <p class="tagline">Estimated due date and trimester breakdown — based on your LMP.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>First day of last period</label><input type="date" id="lmp"></div>
+                        <div><label>Cycle length (days)</label><input type="number" id="c" value="28"></div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Calculate</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <div style="text-align:center;"><strong id="due" style="font-size:24px;color:#EC4899;"></strong><div style="color:#9aa1b6;">estimated due date</div></div>
+                    <table style="width:100%;font-size:14px;margin-top:10px;"><tbody id="rows"></tbody></table>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Naegele's rule — due date ≈ LMP + 280 days, adjusted for non-28-day cycles. Always confirm with a clinician.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("runBtn").addEventListener("click", () => {
+            const lmp = new Date($("lmp").value);
+            if (isNaN(lmp)) return showError("Pick a date.");
+            const adj = (parseFloat($("c").value) || 28) - 28;
+            const due = new Date(lmp); due.setDate(due.getDate() + 280 + adj);
+            const today = new Date();
+            const week = Math.max(0, Math.floor((today - lmp) / (7 * 86400000)));
+            const days = Math.max(0, Math.floor((today - lmp) / 86400000)) % 7;
+            const fmt = d => d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+            $("due").textContent = fmt(due);
+            const tri = (n) => { const d = new Date(lmp); d.setDate(d.getDate() + n); return fmt(d); };
+            $("rows").innerHTML = `
+                <tr><td style='padding:6px;color:#9aa1b6;'>Currently</td><td style='text-align:right;padding:6px;'>Week ${week}, day ${days}</td></tr>
+                <tr><td style='padding:6px;color:#9aa1b6;'>1st trimester</td><td style='text-align:right;padding:6px;'>${fmt(lmp)} → ${tri(13*7)}</td></tr>
+                <tr><td style='padding:6px;color:#9aa1b6;'>2nd trimester</td><td style='text-align:right;padding:6px;'>${tri(13*7+1)} → ${tri(27*7)}</td></tr>
+                <tr><td style='padding:6px;color:#9aa1b6;'>3rd trimester</td><td style='text-align:right;padding:6px;'>${tri(27*7+1)} → ${fmt(due)}</td></tr>
+            `;
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

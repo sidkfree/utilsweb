@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Readability Score — UtilsWeb</title>
+    <meta name="description" content="Flesch Reading Ease, Flesch-Kincaid grade, ARI, Gunning Fog.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #D946EF, #06B6D4);">📖</div>
+                    <div>
+                        <h1>Readability Score</h1>
+                        <p class="tagline">Flesch Reading Ease, Flesch-Kincaid grade, ARI, Gunning Fog.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Text</label>
+                    <textarea id="inp" rows="12" placeholder="Paste an article..."></textarea>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:14px;">
+                    <div id="meta" style="text-align:center;color:#9aa1b6;font-size:13px;"></div>
+                    <table style="width:100%;font-size:14px;"><tbody id="rows"></tbody></table>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Five standard readability metrics. Higher Flesch = easier. Aim for grade 8 for general web content.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function syllables(word) {
+            word = word.toLowerCase().replace(/[^a-z]/g, "");
+            if (word.length <= 3) return 1;
+            word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, "").replace(/^y/, "");
+            return (word.match(/[aeiouy]{1,2}/g) || []).length || 1;
+        }
+        function analyse(text) {
+            const sentences = (text.match(/[^.!?]+[.!?]+/g) || [text]).length;
+            const words = (text.match(/\b[a-zA-Z]+\b/g) || []);
+            const totalWords = words.length;
+            const totalSyl = words.reduce((s, w) => s + syllables(w), 0);
+            const complex = words.filter(w => syllables(w) >= 3).length;
+            const chars = words.join("").length;
+            if (!totalWords) return null;
+            const wps = totalWords / sentences;
+            const sps = totalSyl / totalWords;
+            return {
+                "Flesch Reading Ease": 206.835 - 1.015 * wps - 84.6 * sps,
+                "Flesch-Kincaid grade": 0.39 * wps + 11.8 * sps - 15.59,
+                "Gunning Fog": 0.4 * (wps + 100 * complex / totalWords),
+                "ARI": 4.71 * (chars / totalWords) + 0.5 * wps - 21.43,
+                "Coleman-Liau": 0.0588 * (chars / totalWords * 100) - 0.296 * (sentences / totalWords * 100) - 15.8,
+            };
+        }
+        function update() {
+            const text = $("inp").value;
+            const r = analyse(text);
+            if (!r) { $("rows").innerHTML = ""; $("meta").textContent = ""; return; }
+            const words = (text.match(/\b[a-zA-Z]+\b/g) || []).length;
+            const sents = (text.match(/[^.!?]+[.!?]+/g) || [text]).length;
+            $("meta").textContent = `${words} words, ${sents} sentences`;
+            const fre = r["Flesch Reading Ease"];
+            const ease = fre >= 90 ? "5th grade" : fre >= 80 ? "6th grade" : fre >= 70 ? "7th grade" : fre >= 60 ? "8-9th grade" : fre >= 50 ? "10-12th" : fre >= 30 ? "College" : "Graduate";
+            $("rows").innerHTML = Object.entries(r).map(([k, v]) =>
+                `<tr><td style='padding:6px;color:#9aa1b6;'>${k}</td><td style='text-align:right;padding:6px;color:#06B6D4;font-weight:600;'>${v.toFixed(1)}</td></tr>`
+            ).join("") + `<tr><td style='padding:6px;color:#9aa1b6;'>Reading level</td><td style='text-align:right;padding:6px;color:#10B981;'>${ease}</td></tr>`;
+        }
+        $("inp").addEventListener("input", update);
+
+    })();
+    </script>
+</body>
+</html>

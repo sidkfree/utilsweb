@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Email Validator — UtilsWeb</title>
+    <meta name="description" content="Validate email syntax + check for common typos in the domain.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EC4899, #8B5CF6);">✉️</div>
+                    <div>
+                        <h1>Email Validator</h1>
+                        <p class="tagline">Validate email syntax + check for common typos in the domain.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Email address(es) — one per line</label>
+                    <textarea id="inp" rows="8" placeholder="user@example.com">contact@utilsweb.com
+bob@gmial.com
+bad@@example</textarea>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;">
+                    <table style="width:100%;font-size:13px;"><tbody id="rows"></tbody></table>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Syntax check + tiny built-in typo dictionary for the top free providers. No DNS / mailbox check (browsers can't do MX lookups).</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const TYPOS = { "gmial.com":"gmail.com","gmal.com":"gmail.com","gnail.com":"gmail.com","yaho.com":"yahoo.com","outlok.com":"outlook.com","hotnail.com":"hotmail.com","hotmial.com":"hotmail.com" };
+        const RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        function check() {
+            const lines = $("inp").value.split("\n").map(s => s.trim()).filter(Boolean);
+            $("rows").innerHTML = lines.map(e => {
+                let status, color, note = "";
+                if (RE.test(e)) {
+                    status = "✓ Valid"; color = "#10B981";
+                    const dom = e.split("@")[1].toLowerCase();
+                    if (TYPOS[dom]) note = `→ did you mean <strong>${TYPOS[dom]}</strong>?`;
+                } else { status = "✗ Invalid"; color = "#EF4444"; }
+                return `<tr><td style='padding:6px;font-family:ui-monospace,monospace;'>${e}</td><td style='text-align:right;padding:6px;color:${color};'>${status}</td><td style='padding:6px;color:#F59E0B;font-size:12px;'>${note}</td></tr>`;
+            }).join("");
+        }
+        $("inp").addEventListener("input", check);
+        check();
+
+    })();
+    </script>
+</body>
+</html>

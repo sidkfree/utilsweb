@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Photo Crop Aspect Calculator — UtilsWeb</title>
+    <meta name="description" content="Find the cropped pixel dimensions to fit Instagram, TikTok, YouTube, A4, etc.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F43F5E, #8B5CF6);">✂️</div>
+                    <div>
+                        <h1>Photo Crop Aspect Calculator</h1>
+                        <p class="tagline">Find the cropped pixel dimensions to fit Instagram, TikTok, YouTube, A4, etc.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Original width (px)</label><input type="number" id="w" value="6000"></div>
+                        <div><label>Original height (px)</label><input type="number" id="h" value="4000"></div>
+                    </div>
+                    <label style="margin-top:10px;">Target ratio</label>
+                    <select id="r">
+                        <option value="1:1">Square (1:1)</option>
+                        <option value="4:5" selected>Instagram portrait (4:5)</option>
+                        <option value="9:16">Reels / TikTok / Story (9:16)</option>
+                        <option value="16:9">YouTube / 16:9</option>
+                        <option value="21:9">Cinematic 21:9</option>
+                        <option value="3:2">Photo print 3:2</option>
+                        <option value="4:3">Classic 4:3</option>
+                        <option value="0.7071:1">A-series paper (1:√2)</option>
+                    </select>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div><strong id="r1" style="font-size:22px;color:#06B6D4;"></strong><div>Crop W × H</div></div>
+                    <div id="loss" style="color:#9aa1b6;margin-top:6px;font-size:13px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Centre crop to fit the target ratio. The longer dimension is reduced; the shorter stays full-size.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const w = +$("w").value, h = +$("h").value;
+            const [a, b] = $("r").value.split(":").map(Number);
+            const target = a / b;
+            const orig = w / h;
+            let cw, ch;
+            if (target > orig) { cw = w; ch = w / target; }
+            else { ch = h; cw = h * target; }
+            $("r1").textContent = `${Math.round(cw)} × ${Math.round(ch)} px`;
+            $("loss").textContent = `Lost ${(100 - cw*ch/(w*h)*100).toFixed(1)}% of pixels`;
+        }
+        ["w","h","r"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

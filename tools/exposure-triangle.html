@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Exposure Triangle Calculator — UtilsWeb</title>
+    <meta name="description" content="Change one of ISO / aperture / shutter — keep equivalent exposure.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #8B5CF6);">📷</div>
+                    <div>
+                        <h1>Exposure Triangle Calculator</h1>
+                        <p class="tagline">Change one of ISO / aperture / shutter — keep equivalent exposure.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>ISO</label><input type="number" id="iso" value="100"></div>
+                        <div><label>Aperture (f/)</label><input type="number" id="N" value="2.8" step="0.1"></div>
+                        <div><label>Shutter (s)</label><input type="number" id="t" value="0.008" step="0.0001"></div>
+                    </div>
+                    <label style="margin-top:10px;">Now change the value you want to fix, then click "Match" — the others adjust.</label>
+                    <div class="row" style="display:flex;gap:10px;margin-top:10px;">
+                        <button class="btn primary" data-fix="iso">Fix ISO, adjust others</button>
+                        <button class="btn primary" data-fix="N">Fix aperture, adjust others</button>
+                        <button class="btn primary" data-fix="t">Fix shutter, adjust others</button>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div><strong id="ev" style="font-size:22px;color:#8B5CF6;"></strong> <span style="color:#9aa1b6;">EV @ ISO 100</span></div>
+                    <div id="note" style="color:#9aa1b6;font-size:13px;margin-top:6px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>EV = log₂(N²/t) − log₂(ISO/100). Any (ISO, N, t) trio with the same EV gives the same brightness.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function ev(iso, N, t) { return Math.log2(N * N / t) - Math.log2(iso / 100); }
+        function update() { $("ev").textContent = ev(+$("iso").value, +$("N").value, +$("t").value).toFixed(2); }
+        ["iso","N","t"].forEach(id => $(id).addEventListener("input", update));
+        document.querySelectorAll("[data-fix]").forEach(b => b.addEventListener("click", (e) => {
+            e.preventDefault();
+            const fix = b.dataset.fix;
+            const target = ev(+$("iso").value, +$("N").value, +$("t").value);
+            $("note").textContent = `Equivalent exposure EV ${target.toFixed(2)} — adjust to match (fixed: ${fix}).`;
+            update();
+        }));
+        update();
+
+    })();
+    </script>
+</body>
+</html>

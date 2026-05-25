@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Ethereum Gas Fee Estimator — UtilsWeb</title>
+    <meta name="description" content="Compute the ETH and USD cost of a transaction for any gas price and limit.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EAB308, #EF4444);">⛽</div>
+                    <div>
+                        <h1>Ethereum Gas Fee Estimator</h1>
+                        <p class="tagline">Compute the ETH and USD cost of a transaction for any gas price and limit.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Gas limit</label><input type="number" id="gl" value="21000"></div>
+                        <div><label>Gas price (Gwei)</label><input type="number" id="gp" value="30" step="0.1"></div>
+                        <div><label>ETH price (USD)</label><input type="number" id="ep" value="3000"></div>
+                    </div>
+                    <div class="row" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                        <button class="btn primary" data-gl="21000">Transfer (21K)</button>
+                        <button class="btn primary" data-gl="65000">ERC-20 transfer</button>
+                        <button class="btn primary" data-gl="150000">Uniswap swap</button>
+                        <button class="btn primary" data-gl="300000">Complex DeFi</button>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;text-align:center;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><strong id="ethCost" style="font-size:24px;color:#F59E0B;"></strong><div>Fee in ETH</div></div>
+                        <div><strong id="usdCost" style="font-size:24px;color:#10B981;"></strong><div>Fee in USD</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Fee in ETH = gas limit × gas price (Gwei) ÷ 10⁹. USD = fee × current ETH price.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const gl = parseFloat($("gl").value) || 0;
+            const gp = parseFloat($("gp").value) || 0;
+            const ep = parseFloat($("ep").value) || 0;
+            const ethFee = gl * gp / 1e9;
+            $("ethCost").textContent = ethFee.toFixed(6) + " ETH";
+            $("usdCost").textContent = "$" + (ethFee * ep).toFixed(2);
+        }
+        ["gl","gp","ep"].forEach(id => $(id).addEventListener("input", calc));
+        document.querySelectorAll("[data-gl]").forEach(b => b.addEventListener("click", (e) => { e.preventDefault(); $("gl").value = b.dataset.gl; calc(); }));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

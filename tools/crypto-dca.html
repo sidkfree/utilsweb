@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Crypto DCA Backtest — UtilsWeb</title>
+    <meta name="description" content="How would a recurring buy have performed at a given average price?">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F43F5E, #F59E0B);">📅</div>
+                    <div>
+                        <h1>Crypto DCA Backtest</h1>
+                        <p class="tagline">How would a recurring buy have performed at a given average price?</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Amount per buy ($)</label><input type="number" id="a" value="100" step="0.01"></div>
+                        <div><label>Frequency (days)</label><input type="number" id="f" value="7"></div>
+                        <div><label>Number of buys</label><input type="number" id="n" value="52"></div>
+                        <div><label>Average buy price</label><input type="number" id="bp" value="35000" step="0.01"></div>
+                        <div><label>Current price</label><input type="number" id="cp" value="60000" step="0.01"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+                        <div><strong id="inv" style="font-size:22px;"></strong><div>Total invested</div></div>
+                        <div><strong id="units" style="font-size:22px;color:#06B6D4;"></strong><div>Units bought</div></div>
+                        <div><strong id="val" style="font-size:22px;color:#10B981;"></strong><div>Current value</div></div>
+                        <div><strong id="ret" style="font-size:22px;"></strong><div>Return</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Simple dollar-cost-averaging math: units = total invested / average buy price. Current value = units × current price.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const a = parseFloat($("a").value) || 0;
+            const n = parseFloat($("n").value) || 0;
+            const bp = parseFloat($("bp").value) || 0;
+            const cp = parseFloat($("cp").value) || 0;
+            const inv = a * n;
+            const units = bp > 0 ? inv / bp : 0;
+            const val = units * cp;
+            const ret = inv > 0 ? (val - inv) / inv * 100 : 0;
+            $("inv").textContent = "$" + inv.toFixed(2);
+            $("units").textContent = units.toFixed(6);
+            $("val").textContent = "$" + val.toFixed(2);
+            $("ret").textContent = ret.toFixed(2) + "%";
+            $("ret").style.color = ret >= 0 ? "#10B981" : "#EF4444";
+        }
+        ["a","f","n","bp","cp"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

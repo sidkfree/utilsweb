@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Dice Roller — UtilsWeb</title>
+    <meta name="description" content="Roll any combination — 2d6, 4d8+2, 1d20. Tabletop standard notation.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #0EA5E9, #8B5CF6);">🎲</div>
+                    <div>
+                        <h1>Dice Roller</h1>
+                        <p class="tagline">Roll any combination — 2d6, 4d8+2, 1d20. Tabletop standard notation.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Dice notation</label>
+                    <input type="text" id="d" value="2d6+3" placeholder="e.g. 1d20, 4d8, 3d6+2" style="font-family:ui-monospace,monospace;">
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Roll</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;text-align:center;">
+                    <div><strong id="total" style="font-size:48px;color:#0EA5E9;"></strong></div>
+                    <div id="breakdown" style="color:#9aa1b6;font-family:ui-monospace,monospace;font-size:14px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Standard <code>NdM[+K]</code> notation. Uses <code>crypto.getRandomValues</code> for unbiased rolls.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("runBtn").addEventListener("click", () => {
+            clearError();
+            const m = $("d").value.trim().match(/^(\d+)d(\d+)([+-]\d+)?$/i);
+            if (!m) return showError("Expected format like 2d6 or 1d20+3.");
+            const n = parseInt(m[1], 10), sides = parseInt(m[2], 10), mod = parseInt(m[3] || "0", 10);
+            if (n > 100 || sides > 1000) return showError("Limit: 100 dice, 1000 sides.");
+            const rolls = [];
+            const buf = new Uint32Array(n);
+            crypto.getRandomValues(buf);
+            for (let i = 0; i < n; i++) rolls.push((buf[i] % sides) + 1);
+            const sum = rolls.reduce((a, b) => a + b, 0) + mod;
+            $("total").textContent = sum;
+            $("breakdown").textContent = `[${rolls.join(", ")}]` + (mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : "") + ` = ${sum}`;
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

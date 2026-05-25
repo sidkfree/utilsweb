@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Tip Calculator — UtilsWeb</title>
+    <meta name="description" content="Split the bill, add a tip, see per-person totals.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F43F5E, #F97316);">🍽️</div>
+                    <div>
+                        <h1>Tip Calculator</h1>
+                        <p class="tagline">Split the bill, add a tip, see per-person totals.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Bill</label><input type="number" id="b" value="50" step="0.01"></div>
+                        <div><label>Tip %</label><input type="number" id="t" value="18"></div>
+                        <div><label>People</label><input type="number" id="p" value="2" min="1"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+                        <div><strong id="tip" style="font-size:22px;color:#F59E0B;"></strong><div>Tip</div></div>
+                        <div><strong id="tot" style="font-size:22px;color:#10B981;"></strong><div>Total</div></div>
+                        <div><strong id="per" style="font-size:22px;color:#06B6D4;"></strong><div>Per person</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Tip = bill · (tip%). Total = bill + tip. Per person = total / people.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function update() {
+            const b = parseFloat($("b").value) || 0;
+            const t = parseFloat($("t").value) || 0;
+            const p = Math.max(1, parseInt($("p").value, 10) || 1);
+            const tip = b * t / 100, tot = b + tip;
+            $("tip").textContent = "$" + tip.toFixed(2);
+            $("tot").textContent = "$" + tot.toFixed(2);
+            $("per").textContent = "$" + (tot / p).toFixed(2);
+        }
+        ["b","t","p"].forEach(id => $(id).addEventListener("input", update));
+        update();
+
+    })();
+    </script>
+</body>
+</html>

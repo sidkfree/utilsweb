@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Baking Ratio Calculator — UtilsWeb</title>
+    <meta name="description" content="Bread, cake, pasta, cookie ratios — give the flour weight, get the rest.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #F97316);">🍞</div>
+                    <div>
+                        <h1>Baking Ratio Calculator</h1>
+                        <p class="tagline">Bread, cake, pasta, cookie ratios — give the flour weight, get the rest.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Flour (g)</label><input type="number" id="f" value="500"></div>
+                        <div>
+                            <label>Recipe type</label>
+                            <select id="r">
+                                <option value="bread">Lean bread (5:3 flour:water + 2% salt)</option>
+                                <option value="hyd-rich">High-hydration bread (5:4)</option>
+                                <option value="pasta">Fresh pasta (10:1 flour:egg yolk roughly)</option>
+                                <option value="cake">Classic pound cake (1:1:1:1)</option>
+                                <option value="cookies">Cookies (3:2:1 flour:fat:sugar)</option>
+                                <option value="shortcrust">Shortcrust pastry (3:2:1 flour:butter:water)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;">
+                    <table style="width:100%;font-size:14px;"><tbody id="rows"></tbody></table>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Baker's percentages — every ingredient as a ratio of flour weight. Tweak the recipe type for typical proportions.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const RATIOS = {
+            "bread":      [["Water", 0.60], ["Salt", 0.02], ["Yeast (instant)", 0.01]],
+            "hyd-rich":   [["Water", 0.80], ["Salt", 0.02], ["Yeast (instant)", 0.005]],
+            "pasta":      [["Egg (whole)", 0.55], ["Olive oil", 0.04], ["Salt", 0.01]],
+            "cake":       [["Sugar", 1.00], ["Butter", 1.00], ["Eggs", 1.00]],
+            "cookies":    [["Butter", 0.67], ["Sugar", 0.33], ["Egg", 0.20]],
+            "shortcrust": [["Butter", 0.67], ["Water (cold)", 0.33], ["Salt", 0.01]],
+        };
+        function calc() {
+            const f = parseFloat($("f").value) || 0;
+            const rows = [["Flour", f]];
+            for (const [k, r] of RATIOS[$("r").value]) rows.push([k, f * r]);
+            $("rows").innerHTML = rows.map(([k, v]) =>
+                `<tr><td style='padding:8px;color:#9aa1b6;'>${k}</td><td style='text-align:right;padding:8px;font-weight:600;color:#F59E0B;'>${v.toFixed(1)} g</td></tr>`
+            ).join("");
+        }
+        ["f","r"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

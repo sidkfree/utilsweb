@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>IBAN Validator — UtilsWeb</title>
+    <meta name="description" content="Validate an IBAN — country, length, mod-97 checksum.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #06B6D4, #10B981);">🏦</div>
+                    <div>
+                        <h1>IBAN Validator</h1>
+                        <p class="tagline">Validate an IBAN — country, length, mod-97 checksum.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>IBAN</label>
+                    <input type="text" id="iban" value="DE89 3704 0044 0532 0130 00" style="font-family:ui-monospace,monospace;letter-spacing:2px;text-transform:uppercase;">
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:8px;">
+                    <div id="status" style="font-size:18px;"></div>
+                    <div id="meta" style="color:#9aa1b6;font-size:13px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Country-specific length check + standard ISO 13616 mod-97 checksum.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const LEN = { AD:24,AE:23,AL:28,AT:20,AZ:28,BA:20,BE:16,BG:22,BH:22,BR:29,CH:21,CR:22,CY:28,CZ:24,DE:22,DK:18,DO:28,EE:20,ES:24,FI:18,FO:18,FR:27,GB:22,GE:22,GI:23,GL:18,GR:27,GT:28,HR:21,HU:28,IE:22,IL:23,IS:26,IT:27,JO:30,KW:30,KZ:20,LB:28,LI:21,LT:20,LU:20,LV:21,MC:27,MD:24,ME:22,MK:19,MR:27,MT:31,MU:30,NL:18,NO:15,PK:24,PL:28,PS:29,PT:25,QA:29,RO:24,RS:22,SA:24,SE:24,SI:19,SK:24,SM:27,TN:24,TR:26,UA:29,VG:24,XK:20 };
+        function mod97(s) {
+            // Move first 4 chars to end, replace letters with numbers, compute mod 97 by chunks.
+            const r = s.slice(4) + s.slice(0, 4);
+            let trans = "";
+            for (const c of r) {
+                if (/[A-Z]/.test(c)) trans += (c.charCodeAt(0) - 55).toString();
+                else trans += c;
+            }
+            let rem = 0;
+            for (const d of trans) rem = (rem * 10 + parseInt(d, 10)) % 97;
+            return rem;
+        }
+        function check() {
+            const v = $("iban").value.replace(/\s+/g, "").toUpperCase();
+            if (!v) { $("status").textContent = ""; $("meta").textContent = ""; return; }
+            const cc = v.slice(0, 2);
+            const expLen = LEN[cc];
+            const issues = [];
+            if (!expLen) issues.push("Unknown country code: " + cc);
+            else if (v.length !== expLen) issues.push(`Expected ${expLen} chars for ${cc}, got ${v.length}`);
+            if (!/^[A-Z]{2}\d{2}[A-Z0-9]+$/.test(v)) issues.push("Bad character pattern");
+            if (issues.length === 0) {
+                if (mod97(v) === 1) {
+                    $("status").innerHTML = "<span style='color:#10B981;'>✓ Valid IBAN</span>";
+                    $("meta").textContent = `${cc} · ${v.length} characters`;
+                } else { issues.push("Mod-97 checksum failed"); }
+            }
+            if (issues.length) {
+                $("status").innerHTML = "<span style='color:#EF4444;'>✗ Invalid</span>";
+                $("meta").innerHTML = issues.map(i => "• " + i).join("<br>");
+            }
+        }
+        $("iban").addEventListener("input", check);
+        check();
+
+    })();
+    </script>
+</body>
+</html>

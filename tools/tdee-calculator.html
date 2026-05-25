@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>TDEE Calculator — UtilsWeb</title>
+    <meta name="description" content="Total Daily Energy Expenditure — calories you burn each day.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F43F5E, #F97316);">💪</div>
+                    <div>
+                        <h1>TDEE Calculator</h1>
+                        <p class="tagline">Total Daily Energy Expenditure — calories you burn each day.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;">
+                        <div><label>Age</label><input type="number" id="age" value="30"></div>
+                        
+                        <div>
+                            <label>Sex</label>
+                            <select id="sex"><option value="m" selected>Male</option><option value="f">Female</option></select>
+                        </div>
+                        <div><label>Weight kg</label><input type="number" id="w" value="75" step="0.1"></div>
+                        <div><label>Height cm</label><input type="number" id="h" value="178"></div>
+                        <div>
+                            <label>Activity</label>
+                            <select id="act">
+                                <option value="1.2">Sedentary</option>
+                                <option value="1.375">Light (1-3×/wk)</option>
+                                <option value="1.55" selected>Moderate (3-5×/wk)</option>
+                                <option value="1.725">Active (6-7×/wk)</option>
+                                <option value="1.9">Very active (2x/day)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+                        <div><strong id="bmr" style="font-size:22px;color:#9aa1b6;"></strong><div>BMR</div></div>
+                        <div><strong id="tdee" style="font-size:24px;color:#EF4444;"></strong><div>Maintenance kcal</div></div>
+                        <div><strong id="cut" style="font-size:22px;color:#F59E0B;"></strong><div>Cut (−20%)</div></div>
+                        <div><strong id="bulk" style="font-size:22px;color:#10B981;"></strong><div>Bulk (+15%)</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>TDEE = BMR × activity multiplier. Cut and bulk recommendations follow the 20% / 15% rules of thumb.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const age = parseFloat($("age").value), w = parseFloat($("w").value), h = parseFloat($("h").value);
+            const bmr = 10 * w + 6.25 * h - 5 * age + ($("sex").value === "m" ? 5 : -161);
+            const tdee = bmr * parseFloat($("act").value);
+            $("bmr").textContent = Math.round(bmr);
+            $("tdee").textContent = Math.round(tdee);
+            $("cut").textContent = Math.round(tdee * 0.8);
+            $("bulk").textContent = Math.round(tdee * 1.15);
+        }
+        ["age","sex","w","h","act"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Break-Even Calculator — UtilsWeb</title>
+    <meta name="description" content="How many units must you sell to cover fixed costs?">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #7C3AED, #84CC16);">⚖️</div>
+                    <div>
+                        <h1>Break-Even Calculator</h1>
+                        <p class="tagline">How many units must you sell to cover fixed costs?</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Fixed costs</label><input type="number" id="fc" value="10000"></div>
+                        <div><label>Price per unit</label><input type="number" id="p" value="25" step="0.01"></div>
+                        <div><label>Variable cost per unit</label><input type="number" id="vc" value="10" step="0.01"></div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Calculate</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+                        <div><strong id="u" style="font-size:24px;color:#10B981;"></strong><div>Break-even units</div></div>
+                        <div><strong id="rev" style="font-size:22px;color:#06B6D4;"></strong><div>Break-even revenue</div></div>
+                        <div><strong id="cm" style="font-size:22px;color:#F59E0B;"></strong><div>Contribution margin /unit</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Break-even units = fixed costs / (price − variable cost). Each additional unit beyond is pure profit (to the contribution margin).</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("runBtn").addEventListener("click", () => {
+            const fc = parseFloat($("fc").value), p = parseFloat($("p").value), vc = parseFloat($("vc").value);
+            const cm = p - vc;
+            if (cm <= 0) return showError("Price must exceed variable cost.");
+            const units = fc / cm;
+            $("u").textContent = Math.ceil(units).toLocaleString();
+            $("rev").textContent = "$" + (Math.ceil(units) * p).toLocaleString();
+            $("cm").textContent = "$" + cm.toFixed(2);
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Crypto Profit / Loss — UtilsWeb</title>
+    <meta name="description" content="Compute realized P&L and break-even price for a crypto position.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #10B981, #F59E0B);">📊</div>
+                    <div>
+                        <h1>Crypto Profit / Loss</h1>
+                        <p class="tagline">Compute realized P&L and break-even price for a crypto position.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Buy price</label><input type="number" id="bp" value="30000" step="0.01"></div>
+                        <div><label>Sell price</label><input type="number" id="sp" value="45000" step="0.01"></div>
+                        <div><label>Quantity</label><input type="number" id="q" value="0.5" step="0.0001"></div>
+                        <div><label>Fees % (round-trip)</label><input type="number" id="f" value="0.2" step="0.01"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+                        <div><strong id="pnl" style="font-size:24px;"></strong><div>P&L</div></div>
+                        <div><strong id="pct" style="font-size:24px;"></strong><div>Return</div></div>
+                        <div><strong id="be" style="font-size:22px;color:#06B6D4;"></strong><div>Break-even price</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>P&L = (sell − buy) × quantity, minus fees. Break-even = buy / (1 − fees).</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const bp = parseFloat($("bp").value);
+            const sp = parseFloat($("sp").value);
+            const q  = parseFloat($("q").value);
+            const f  = parseFloat($("f").value) / 100;
+            if (!(bp > 0 && q > 0)) return;
+            const cost = bp * q;
+            const proceeds = sp * q * (1 - f);
+            const pnl = proceeds - cost;
+            $("pnl").textContent = "$" + pnl.toFixed(2);
+            $("pnl").style.color = pnl >= 0 ? "#10B981" : "#EF4444";
+            $("pct").textContent = (pnl / cost * 100).toFixed(2) + "%";
+            $("pct").style.color = pnl >= 0 ? "#10B981" : "#EF4444";
+            $("be").textContent = "$" + (bp / (1 - f)).toFixed(2);
+        }
+        ["bp","sp","q","f"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>RSA Key Pair Generator — UtilsWeb</title>
+    <meta name="description" content="Generate a 2048 / 3072 / 4096-bit RSA key pair in PEM format.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #10B981, #6366F1);">🗝️</div>
+                    <div>
+                        <h1>RSA Key Pair Generator</h1>
+                        <p class="tagline">Generate a 2048 / 3072 / 4096-bit RSA key pair in PEM format.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div>
+                            <label>Key size</label>
+                            <select id="bits"><option>2048</option><option selected>3072</option><option>4096</option></select>
+                        </div>
+                        <div>
+                            <label>Hash</label>
+                            <select id="hash"><option>SHA-1</option><option selected>SHA-256</option><option>SHA-384</option><option>SHA-512</option></select>
+                        </div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Generate</button>
+                    <div id="prog" style="margin-top:8px;color:#9aa1b6;font-size:13px;"></div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:14px;">
+                    <div><strong>Public key (SPKI / PEM)</strong><textarea id="pub" rows="8" readonly style="font-family:ui-monospace,monospace;font-size:11px;margin-top:4px;"></textarea></div>
+                    <div><strong>Private key (PKCS#8 / PEM)</strong><textarea id="priv" rows="10" readonly style="font-family:ui-monospace,monospace;font-size:11px;margin-top:4px;"></textarea></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Native WebCrypto <code>generateKey</code>. Keys are exported to SPKI (public) and PKCS#8 (private) DER, then wrapped in standard PEM headers.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function toPem(buf, label) {
+            let s = btoa(String.fromCharCode(...new Uint8Array(buf)));
+            return `-----BEGIN ${label}-----\n${s.match(/.{1,64}/g).join("\n")}\n-----END ${label}-----`;
+        }
+        $("runBtn").addEventListener("click", async () => {
+            clearError();
+            $("prog").textContent = "Generating... (may take a few seconds)";
+            await new Promise(r => setTimeout(r, 0));
+            try {
+                const pair = await crypto.subtle.generateKey({
+                    name: "RSA-OAEP",
+                    modulusLength: parseInt($("bits").value, 10),
+                    publicExponent: new Uint8Array([1, 0, 1]),
+                    hash: $("hash").value,
+                }, true, ["encrypt", "decrypt"]);
+                const pub = await crypto.subtle.exportKey("spki", pair.publicKey);
+                const priv = await crypto.subtle.exportKey("pkcs8", pair.privateKey);
+                $("pub").value = toPem(pub, "PUBLIC KEY");
+                $("priv").value = toPem(priv, "PRIVATE KEY");
+                $("prog").textContent = "Done.";
+                $("resultBox").style.display = "flex";
+            } catch (e) { showError(e.message); }
+        });
+
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>HMAC Generator — UtilsWeb</title>
+    <meta name="description" content="HMAC-SHA-1 / -256 / -384 / -512 of any text with a secret key.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F43F5E, #F59E0B);">🛂</div>
+                    <div>
+                        <h1>HMAC Generator</h1>
+                        <p class="tagline">HMAC-SHA-1 / -256 / -384 / -512 of any text with a secret key.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div>
+                            <label>Algorithm</label>
+                            <select id="algo"><option>SHA-1</option><option selected>SHA-256</option><option>SHA-384</option><option>SHA-512</option></select>
+                        </div>
+                        <div><label>Secret key</label><input type="text" id="key" value="secret" style="font-family:ui-monospace,monospace;"></div>
+                    </div>
+                    <label style="margin-top:10px;">Message</label>
+                    <textarea id="msg" rows="5" placeholder="data to sign" style="font-family:ui-monospace,monospace;">Hello world</textarea>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Compute</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <input id="out" readonly style="font-family:ui-monospace,monospace;">
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>HMAC via WebCrypto. Use for API request signing, JWT signing (server-side), webhook verification.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("runBtn").addEventListener("click", async () => {
+            clearError();
+            try {
+                const enc = new TextEncoder();
+                const key = await crypto.subtle.importKey("raw", enc.encode($("key").value), { name: "HMAC", hash: $("algo").value }, false, ["sign"]);
+                const sig = await crypto.subtle.sign("HMAC", key, enc.encode($("msg").value));
+                $("out").value = [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, "0")).join("");
+                $("resultBox").style.display = "flex";
+            } catch (e) { showError(e.message); }
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

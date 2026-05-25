@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Typing Speed Test — UtilsWeb</title>
+    <meta name="description" content="Measure your words-per-minute and accuracy on a 1-minute prompt.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #06B6D4, #F97316);">⌨️</div>
+                    <div>
+                        <h1>Typing Speed Test</h1>
+                        <p class="tagline">Measure your words-per-minute and accuracy on a 1-minute prompt.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div id="prompt" style="font-family:Georgia,serif;font-size:18px;line-height:1.8;background:rgba(0,0,0,.25);padding:18px;border-radius:8px;letter-spacing:0.3px;"></div>
+                    <textarea id="inp" rows="5" placeholder="Start typing here..." style="margin-top:14px;font-family:ui-monospace,monospace;"></textarea>
+                    <div class="row" style="display:flex;gap:10px;margin-top:10px;">
+                        <button class="btn primary" id="newBtn" type="button">New text</button>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;">
+                        <div><strong id="wpm" style="font-size:30px;color:#06B6D4;">0</strong><div>WPM</div></div>
+                        <div><strong id="acc" style="font-size:30px;color:#10B981;">100%</strong><div>Accuracy</div></div>
+                        <div><strong id="t" style="font-size:30px;color:#F59E0B;">0s</strong><div>Time</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Standard convention: WPM = correctly-typed characters / 5 / minutes. Accuracy compares each typed char to the target.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const PROMPTS = [
+            "The quick brown fox jumps over the lazy dog while listening to jazz on a foggy autumn evening in the park.",
+            "Typing fast requires practice, but typing accurately and rhythmically matters more than typing quickly with errors.",
+            "Behind every great product is a thousand small decisions that all align around one clear, opinionated user.",
+            "A journey of a thousand miles begins with a single step, then twelve more, then a hundred, then a thousand more.",
+            "Concise writing wins because it respects the reader's time and forces the writer to think harder before speaking.",
+        ];
+        function newText() {
+            $("prompt").textContent = PROMPTS[Math.floor(Math.random() * PROMPTS.length)];
+            $("inp").value = ""; $("inp").focus();
+            startedAt = null;
+        }
+        let startedAt = null;
+        function tick() {
+            const v = $("inp").value;
+            if (!v) return;
+            if (!startedAt) startedAt = Date.now();
+            const target = $("prompt").textContent;
+            const sec = (Date.now() - startedAt) / 1000;
+            let correct = 0; for (let i = 0; i < v.length; i++) if (v[i] === target[i]) correct++;
+            const acc = v.length ? Math.round(correct / v.length * 100) : 100;
+            const wpm = sec > 0 ? Math.round(correct / 5 / (sec / 60)) : 0;
+            $("wpm").textContent = wpm;
+            $("acc").textContent = acc + "%";
+            $("t").textContent = sec.toFixed(0) + "s";
+            $("acc").style.color = acc >= 95 ? "#10B981" : acc >= 85 ? "#F59E0B" : "#EF4444";
+        }
+        $("inp").addEventListener("input", tick);
+        $("newBtn").addEventListener("click", newText);
+        newText();
+
+    })();
+    </script>
+</body>
+</html>

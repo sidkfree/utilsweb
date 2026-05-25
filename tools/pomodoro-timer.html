@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Pomodoro Timer — UtilsWeb</title>
+    <meta name="description" content="25-minute focus blocks with 5-min breaks. Audible ring at the end.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EF4444, #F97316);">🍅</div>
+                    <div>
+                        <h1>Pomodoro Timer</h1>
+                        <p class="tagline">25-minute focus blocks with 5-min breaks. Audible ring at the end.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Focus (min)</label><input type="number" id="fm" value="25"></div>
+                        <div><label>Short break (min)</label><input type="number" id="sb" value="5"></div>
+                        <div><label>Long break (min)</label><input type="number" id="lb" value="20"></div>
+                    </div>
+                    <div class="row" style="display:flex;gap:10px;margin-top:14px;">
+                        <button class="btn primary" id="startBtn" type="button">▶ Start</button>
+                        <button class="btn primary" id="pauseBtn" type="button">⏸ Pause</button>
+                        <button class="btn primary" id="resetBtn" type="button">↺ Reset</button>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div id="phase" style="font-size:14px;color:#9aa1b6;text-transform:uppercase;letter-spacing:2px;"></div>
+                    <div id="time" style="font-size:64px;font-family:ui-monospace,monospace;color:#EF4444;font-weight:600;margin-top:6px;"></div>
+                    <div id="cycle" style="color:#9aa1b6;font-size:13px;margin-top:6px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Classic Pomodoro — 4 × focus blocks separated by short breaks, then a long break. Customise the durations to taste.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        let phase = "focus", remain = 25 * 60, cycle = 0, timer = null;
+        function fmt(s) { return Math.floor(s / 60).toString().padStart(2, "0") + ":" + (s % 60).toString().padStart(2, "0"); }
+        function paint() {
+            $("phase").textContent = phase === "focus" ? "🍅 Focus" : phase === "short" ? "☕ Short break" : "🌿 Long break";
+            $("phase").style.color = phase === "focus" ? "#EF4444" : "#22C55E";
+            $("time").textContent  = fmt(remain);
+            $("time").style.color = phase === "focus" ? "#EF4444" : "#22C55E";
+            $("cycle").textContent = `Completed pomodoros: ${cycle}`;
+        }
+        function beep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const o = ctx.createOscillator(); o.frequency.value = 800; o.connect(ctx.destination);
+                o.start(); o.stop(ctx.currentTime + 0.6);
+            } catch {}
+        }
+        function tick() {
+            if (remain > 0) { remain--; paint(); return; }
+            beep();
+            if (phase === "focus") {
+                cycle++;
+                phase = (cycle % 4 === 0) ? "long" : "short";
+                remain = (phase === "long" ? +$("lb").value : +$("sb").value) * 60;
+            } else {
+                phase = "focus";
+                remain = +$("fm").value * 60;
+            }
+            paint();
+        }
+        $("startBtn").addEventListener("click", () => { if (!timer) timer = setInterval(tick, 1000); });
+        $("pauseBtn").addEventListener("click", () => { clearInterval(timer); timer = null; });
+        $("resetBtn").addEventListener("click", () => { clearInterval(timer); timer = null; phase = "focus"; remain = +$("fm").value * 60; cycle = 0; paint(); });
+        paint();
+
+    })();
+    </script>
+</body>
+</html>

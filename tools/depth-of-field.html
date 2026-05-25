@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Depth of Field Calculator — UtilsWeb</title>
+    <meta name="description" content="Near / far / total DoF for any focal length, aperture, distance.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #8B5CF6, #F59E0B);">📸</div>
+                    <div>
+                        <h1>Depth of Field Calculator</h1>
+                        <p class="tagline">Near / far / total DoF for any focal length, aperture, distance.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;">
+                        <div>
+                            <label>Sensor</label>
+                            <select id="s">
+                                <option value="0.030" selected>Full-frame (CoC 0.030)</option>
+                                <option value="0.019">APS-C (0.019)</option>
+                                <option value="0.015">Micro 4/3 (0.015)</option>
+                                <option value="0.005">1" (0.005)</option>
+                            </select>
+                        </div>
+                        <div><label>Focal length (mm)</label><input type="number" id="f" value="50"></div>
+                        <div><label>Aperture (f/)</label><input type="number" id="N" value="2.8" step="0.1"></div>
+                        <div><label>Subject distance (m)</label><input type="number" id="u" value="3" step="0.1"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;">
+                        <div><strong id="near" style="font-size:20px;color:#06B6D4;"></strong><div>Near</div></div>
+                        <div><strong id="far" style="font-size:20px;color:#06B6D4;"></strong><div>Far</div></div>
+                        <div><strong id="dof" style="font-size:20px;color:#F59E0B;"></strong><div>Total DoF</div></div>
+                        <div><strong id="hyp" style="font-size:20px;color:#8B5CF6;"></strong><div>Hyperfocal</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Standard DoF formulae using circle-of-confusion per sensor format. Hyperfocal = f²/(N·c) + f.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function fmt(m) { return m > 1000 ? "∞" : m < 1 ? (m*100).toFixed(1) + " cm" : m.toFixed(2) + " m"; }
+        function calc() {
+            const c = +$("s").value;             // mm
+            const f = +$("f").value;             // mm
+            const N = +$("N").value;             // f-number
+            const u = +$("u").value * 1000;      // mm
+            const H = f * f / (N * c) + f;       // hyperfocal mm
+            const near = u * (H - f) / (H + u - 2 * f);
+            const far = (u >= H) ? Infinity : u * (H - f) / (H - u);
+            const dof = far - near;
+            $("near").textContent = fmt(near / 1000);
+            $("far").textContent  = fmt(far / 1000);
+            $("dof").textContent  = fmt(dof / 1000);
+            $("hyp").textContent  = fmt(H / 1000);
+        }
+        ["s","f","N","u"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

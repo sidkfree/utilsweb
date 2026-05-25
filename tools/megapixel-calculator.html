@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Megapixel / Print Size — UtilsWeb</title>
+    <meta name="description" content="Maximum print size at a given DPI from any image resolution.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #D946EF, #F59E0B);">🖨️</div>
+                    <div>
+                        <h1>Megapixel / Print Size</h1>
+                        <p class="tagline">Maximum print size at a given DPI from any image resolution.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Image width (px)</label><input type="number" id="w" value="6000"></div>
+                        <div><label>Image height (px)</label><input type="number" id="h" value="4000"></div>
+                        <div><label>Print DPI</label><input type="number" id="dpi" value="300"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+                        <div><strong id="mp" style="font-size:24px;color:#D946EF;"></strong><div>Megapixels</div></div>
+                        <div><strong id="inches" style="font-size:22px;color:#F59E0B;"></strong><div>Print size (inches)</div></div>
+                        <div><strong id="cm" style="font-size:22px;color:#06B6D4;"></strong><div>Print size (cm)</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>MP = pixels / 10⁶. Print size (in) = pixels / DPI. 300 DPI = sharp photo print; 150 DPI = poster from arm's length.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const w = +$("w").value, h = +$("h").value, d = +$("dpi").value;
+            const mp = (w * h) / 1e6;
+            const iw = w / d, ih = h / d;
+            $("mp").textContent = mp.toFixed(1) + " MP";
+            $("inches").textContent = iw.toFixed(2) + " × " + ih.toFixed(2) + " in";
+            $("cm").textContent = (iw * 2.54).toFixed(1) + " × " + (ih * 2.54).toFixed(1) + " cm";
+        }
+        ["w","h","dpi"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

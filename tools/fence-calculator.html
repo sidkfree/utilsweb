@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Fence Calculator — UtilsWeb</title>
+    <meta name="description" content="Posts, rails and pickets needed for any fence length.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #10B981, #F59E0B);">🏡</div>
+                    <div>
+                        <h1>Fence Calculator</h1>
+                        <p class="tagline">Posts, rails and pickets needed for any fence length.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;">
+                        <div><label>Total length (m)</label><input type="number" id="L" value="20" step="0.1"></div>
+                        <div><label>Post spacing (m)</label><input type="number" id="ps" value="2.4" step="0.1"></div>
+                        <div><label>Rails per section</label><input type="number" id="r" value="2"></div>
+                        <div><label>Picket width (cm)</label><input type="number" id="pw" value="10"></div>
+                        <div><label>Picket gap (cm)</label><input type="number" id="pg" value="2"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;">
+                        <div><strong id="posts" style="font-size:22px;color:#10B981;"></strong><div>Posts</div></div>
+                        <div><strong id="rails" style="font-size:22px;color:#F59E0B;"></strong><div>Rails</div></div>
+                        <div><strong id="pickets" style="font-size:22px;color:#06B6D4;"></strong><div>Pickets</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>sections = length / spacing (rounded up). posts = sections+1. pickets = length / (picket + gap).</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const L = +$("L").value, ps = +$("ps").value, r = +$("r").value;
+            const pw = +$("pw").value / 100, pg = +$("pg").value / 100;
+            const sections = Math.max(1, Math.ceil(L / ps));
+            const posts = sections + 1;
+            const rails = sections * r;
+            const pickets = pw + pg > 0 ? Math.ceil(L / (pw + pg)) : 0;
+            $("posts").textContent = posts;
+            $("rails").textContent = rails;
+            $("pickets").textContent = pickets;
+        }
+        ["L","ps","r","pw","pg"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

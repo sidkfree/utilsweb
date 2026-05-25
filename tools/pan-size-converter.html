@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Pan Size Converter — UtilsWeb</title>
+    <meta name="description" content="Adjust recipe quantities for a different pan size — area ratio kept.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EC4899, #F97316);">🍳</div>
+                    <div>
+                        <h1>Pan Size Converter</h1>
+                        <p class="tagline">Adjust recipe quantities for a different pan size — area ratio kept.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div>
+                            <label>From shape</label>
+                            <select id="s1"><option value="round">Round (Ø)</option><option value="sq">Square / rect</option></select>
+                        </div>
+                        <div><label>W₁ (cm)</label><input type="number" id="w1" value="20"></div>
+                        <div><label>L₁ (cm, if rect)</label><input type="number" id="l1" value="20"></div>
+                    </div>
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:10px;">
+                        <div>
+                            <label>To shape</label>
+                            <select id="s2"><option value="round">Round (Ø)</option><option value="sq" selected>Square / rect</option></select>
+                        </div>
+                        <div><label>W₂ (cm)</label><input type="number" id="w2" value="24"></div>
+                        <div><label>L₂ (cm, if rect)</label><input type="number" id="l2" value="24"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div><strong id="r" style="font-size:30px;color:#F97316;"></strong> <span style="color:#9aa1b6;">× quantities</span></div>
+                    <div id="areas" style="color:#9aa1b6;font-size:13px;margin-top:6px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Multiplier = area(new) / area(old). Use it on every ingredient and keep baking time roughly the same (check earlier).</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function area(s, w, l) { return s === "round" ? Math.PI * (w / 2) ** 2 : (l || w) * w; }
+        function calc() {
+            const a1 = area($("s1").value, +$("w1").value, +$("l1").value);
+            const a2 = area($("s2").value, +$("w2").value, +$("l2").value);
+            if (!(a1 > 0 && a2 > 0)) return;
+            $("r").textContent = (a2 / a1).toFixed(2);
+            $("areas").textContent = `Pan 1: ${a1.toFixed(0)} cm² · Pan 2: ${a2.toFixed(0)} cm²`;
+        }
+        ["s1","w1","l1","s2","w2","l2"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Hex / Decimal / Binary Converter — UtilsWeb</title>
+    <meta name="description" content="Convert between bases — handles BigInt-sized numbers for smart-contract data.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #6366F1, #F59E0B);">🔢</div>
+                    <div>
+                        <h1>Hex / Decimal / Binary Converter</h1>
+                        <p class="tagline">Convert between bases — handles BigInt-sized numbers for smart-contract data.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Decimal</label><input type="text" id="dec" value="12345" style="font-family:ui-monospace,monospace;"></div>
+                        <div><label>Hex (0x...)</label><input type="text" id="hex" style="font-family:ui-monospace,monospace;"></div>
+                        <div><label>Binary</label><input type="text" id="bin" style="font-family:ui-monospace,monospace;"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;"></div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>BigInt-based conversion — no precision loss even for 256-bit smart-contract values.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        let inside = false;
+        function fromDec() {
+            if (inside) return;
+            try {
+                const n = BigInt($("dec").value);
+                inside = true;
+                $("hex").value = "0x" + n.toString(16);
+                $("bin").value = n.toString(2);
+                inside = false;
+            } catch {}
+        }
+        function fromHex() {
+            if (inside) return;
+            try {
+                const s = $("hex").value.trim().toLowerCase();
+                const n = BigInt(s.startsWith("0x") ? s : "0x" + s);
+                inside = true;
+                $("dec").value = n.toString(10);
+                $("bin").value = n.toString(2);
+                inside = false;
+            } catch {}
+        }
+        function fromBin() {
+            if (inside) return;
+            try {
+                const n = BigInt("0b" + $("bin").value.trim());
+                inside = true;
+                $("dec").value = n.toString(10);
+                $("hex").value = "0x" + n.toString(16);
+                inside = false;
+            } catch {}
+        }
+        $("dec").addEventListener("input", fromDec);
+        $("hex").addEventListener("input", fromHex);
+        $("bin").addEventListener("input", fromBin);
+        fromDec();
+
+    })();
+    </script>
+</body>
+</html>

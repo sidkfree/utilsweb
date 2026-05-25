@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Income Tax Estimator (US) — UtilsWeb</title>
+    <meta name="description" content="Federal income tax estimate using current US brackets.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #DC2626, #F59E0B);">🧾</div>
+                    <div>
+                        <h1>Income Tax Estimator (US)</h1>
+                        <p class="tagline">Federal income tax estimate using current US brackets.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Gross annual income</label><input type="number" id="inc" value="80000"></div>
+                        <div>
+                            <label>Filing status</label>
+                            <select id="fs">
+                                <option value="single" selected>Single</option>
+                                <option value="married">Married jointly</option>
+                                <option value="hoh">Head of household</option>
+                            </select>
+                        </div>
+                        <div><label>Deductions (above standard)</label><input type="number" id="ded" value="0"></div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Estimate</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+                        <div><strong id="tax" style="font-size:22px;color:#EF4444;"></strong><div>Federal tax</div></div>
+                        <div><strong id="net" style="font-size:22px;color:#10B981;"></strong><div>Take-home</div></div>
+                        <div><strong id="eff" style="font-size:22px;color:#06B6D4;"></strong><div>Effective rate</div></div>
+                        <div><strong id="mb" style="font-size:22px;color:#F59E0B;"></strong><div>Marginal bracket</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Applies 2024 US federal brackets to your taxable income (gross − standard deduction − extra deductions). Federal only — state, FICA and credits not included.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        // 2024 US federal brackets (approximation, education tool only).
+        const BR = {
+            single:  [[0,0.10],[11600,0.12],[47150,0.22],[100525,0.24],[191950,0.32],[243725,0.35],[609350,0.37]],
+            married: [[0,0.10],[23200,0.12],[94300,0.22],[201050,0.24],[383900,0.32],[487450,0.35],[731200,0.37]],
+            hoh:     [[0,0.10],[16550,0.12],[63100,0.22],[100500,0.24],[191950,0.32],[243700,0.35],[609350,0.37]],
+        };
+        const STD = { single: 14600, married: 29200, hoh: 21900 };
+        function fmt(n) { return "$" + Math.round(n).toLocaleString(); }
+        $("runBtn").addEventListener("click", () => {
+            const inc = parseFloat($("inc").value);
+            const fs = $("fs").value;
+            const ded = parseFloat($("ded").value) || 0;
+            const taxable = Math.max(0, inc - STD[fs] - ded);
+            const br = BR[fs];
+            let tax = 0, marg = 0;
+            for (let i = 0; i < br.length; i++) {
+                const lo = br[i][0], rate = br[i][1];
+                const hi = i + 1 < br.length ? br[i+1][0] : Infinity;
+                if (taxable > lo) {
+                    tax += (Math.min(taxable, hi) - lo) * rate;
+                    marg = rate;
+                }
+            }
+            $("tax").textContent = fmt(tax);
+            $("net").textContent = fmt(inc - tax);
+            $("eff").textContent = inc > 0 ? (tax / inc * 100).toFixed(1) + "%" : "0%";
+            $("mb").textContent = (marg * 100).toFixed(0) + "%";
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

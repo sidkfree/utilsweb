@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>CSS Animation Generator — UtilsWeb</title>
+    <meta name="description" content="Build a keyframe animation — type, duration, easing. Preview live.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #10B981, #84CC16);">✨</div>
+                    <div>
+                        <h1>CSS Animation Generator</h1>
+                        <p class="tagline">Build a keyframe animation — type, duration, easing. Preview live.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;">
+                        <div>
+                            <label>Animation</label>
+                            <select id="ty"><option value="fade">Fade in</option><option value="slide-up">Slide up</option><option value="slide-down">Slide down</option><option value="scale">Scale</option><option value="spin">Spin</option><option value="pulse">Pulse</option><option value="bounce">Bounce</option><option value="shake">Shake</option></select>
+                        </div>
+                        <div><label>Duration (s)</label><input type="number" id="dur" value="1" step="0.1" min="0.1" max="10"></div>
+                        <div><label>Easing</label><select id="ease"><option>ease</option><option>ease-in</option><option>ease-out</option><option>ease-in-out</option><option>linear</option></select></div>
+                        <div><label>Iteration</label><select id="it"><option>1</option><option selected>infinite</option></select></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:14px;align-items:center;">
+                    <div style="padding:40px;"><div id="box" style="width:80px;height:80px;background:linear-gradient(135deg,#10B981,#84CC16);border-radius:14px;"></div></div>
+                    <div style="display:flex;gap:10px;width:100%;"><textarea id="css" rows="12" readonly style="flex:1;font-family:ui-monospace,monospace;font-size:12px;"></textarea><button class="btn primary" id="copyBtn">⧉ Copy</button></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Eight common keyframe presets — adjust duration, easing, iteration count. The same keyframes are injected into the preview.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const KEYFRAMES = {
+            fade: "0%{opacity:0}100%{opacity:1}",
+            "slide-up": "0%{transform:translateY(40px);opacity:0}100%{transform:translateY(0);opacity:1}",
+            "slide-down": "0%{transform:translateY(-40px);opacity:0}100%{transform:translateY(0);opacity:1}",
+            scale: "0%{transform:scale(0)}100%{transform:scale(1)}",
+            spin: "0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}",
+            pulse: "0%,100%{transform:scale(1)}50%{transform:scale(1.15)}",
+            bounce: "0%,100%{transform:translateY(0)}50%{transform:translateY(-30px)}",
+            shake: "0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}",
+        };
+        let styleEl = document.createElement("style");
+        document.head.appendChild(styleEl);
+        function paint() {
+            const ty = $("ty").value, dur = $("dur").value, ease = $("ease").value, it = $("it").value;
+            const name = "uw_" + ty;
+            styleEl.textContent = `@keyframes ${name} { ${KEYFRAMES[ty]} }`;
+            const css = `.box {\n  animation: ${name} ${dur}s ${ease} ${it};\n}\n\n@keyframes ${name} {\n  ${KEYFRAMES[ty].replace(/}/g, "}\n  ").replace(/{/g, " {\n    ").trim()}\n}`;
+            $("css").value = css;
+            $("box").style.animation = "none";
+            void $("box").offsetWidth;
+            $("box").style.animation = `${name} ${dur}s ${ease} ${it}`;
+        }
+        ["ty","dur","ease","it"].forEach(id => $(id).addEventListener("input", paint));
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("css").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+        paint();
+
+    })();
+    </script>
+</body>
+</html>

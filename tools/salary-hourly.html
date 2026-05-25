@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Salary ⇄ Hourly Converter — UtilsWeb</title>
+    <meta name="description" content="Convert annual salary to hourly rate (and back), with custom hours/year.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #14B8A6, #3B82F6);">💼</div>
+                    <div>
+                        <h1>Salary ⇄ Hourly Converter</h1>
+                        <p class="tagline">Convert annual salary to hourly rate (and back), with custom hours/year.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;">
+                        <div><label>Annual</label><input type="number" id="a" value="80000"></div>
+                        <div><label>Monthly</label><input type="number" id="m"></div>
+                        <div><label>Weekly</label><input type="number" id="w"></div>
+                        <div><label>Hourly</label><input type="number" id="h" step="0.01"></div>
+                    </div>
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;">
+                        <div><label>Hours / week</label><input type="number" id="hw" value="40"></div>
+                        <div><label>Weeks / year</label><input type="number" id="wy" value="52"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;"></div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Annual / (hours · weeks) = hourly. Edit any field — the others update automatically.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        let inside = false;
+        function fromAnnual() {
+            const a = parseFloat($("a").value) || 0;
+            const hw = parseFloat($("hw").value) || 40;
+            const wy = parseFloat($("wy").value) || 52;
+            inside = true;
+            $("m").value = (a / 12).toFixed(2);
+            $("w").value = (a / wy).toFixed(2);
+            $("h").value = (a / (hw * wy)).toFixed(2);
+            inside = false;
+        }
+        function fromAny(src) {
+            if (inside) return;
+            const hw = parseFloat($("hw").value) || 40;
+            const wy = parseFloat($("wy").value) || 52;
+            let a = 0;
+            if (src === "m") a = (parseFloat($("m").value) || 0) * 12;
+            if (src === "w") a = (parseFloat($("w").value) || 0) * wy;
+            if (src === "h") a = (parseFloat($("h").value) || 0) * hw * wy;
+            $("a").value = a.toFixed(0);
+            fromAnnual();
+        }
+        $("a").addEventListener("input", fromAnnual);
+        ["m","w","h"].forEach(id => $(id).addEventListener("input", () => fromAny(id)));
+        ["hw","wy"].forEach(id => $(id).addEventListener("input", fromAnnual));
+        fromAnnual();
+
+    })();
+    </script>
+</body>
+</html>

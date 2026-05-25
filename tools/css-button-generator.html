@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>CSS Button Generator — UtilsWeb</title>
+    <meta name="description" content="Design a button — colours, radius, padding, shadow. Copy the CSS.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F43F5E, #EC4899);">🔳</div>
+                    <div>
+                        <h1>CSS Button Generator</h1>
+                        <p class="tagline">Design a button — colours, radius, padding, shadow. Copy the CSS.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;">
+                        <div><label>Background</label><input type="color" id="bg" value="#06B6D4"></div>
+                        <div><label>Text color</label><input type="color" id="fg" value="#ffffff"></div>
+                        <div><label>Padding Y</label><input type="number" id="py" value="12"></div>
+                        <div><label>Padding X</label><input type="number" id="px" value="24"></div>
+                        <div><label>Font size</label><input type="number" id="fs" value="16"></div>
+                        <div><label>Radius</label><input type="number" id="r" value="10"></div>
+                        <div><label>Shadow blur</label><input type="number" id="sb" value="20"></div>
+                        <div><label>Shadow opacity</label><input type="range" id="so" min="0" max="100" value="40"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:14px;align-items:center;">
+                    <div style="padding:30px 0;"><button id="prev" style="border:none;cursor:pointer;font-weight:600;">Click me</button></div>
+                    <div style="display:flex;gap:10px;align-items:stretch;width:100%;"><textarea id="css" rows="7" readonly style="flex:1;font-family:ui-monospace,monospace;font-size:12px;"></textarea><button class="btn primary" id="copyBtn">⧉ Copy</button></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>WYSIWYG — the preview applies the exact CSS you'll copy. Shadow uses the background colour for a subtle glow.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function hexA(h, a) { const n = parseInt(h.slice(1), 16); return `rgba(${(n>>16)&255}, ${(n>>8)&255}, ${n&255}, ${a})`; }
+        function paint() {
+            const bg = $("bg").value, fg = $("fg").value;
+            const p = $("py").value + "px " + $("px").value + "px";
+            const r = $("r").value + "px";
+            const fs = $("fs").value + "px";
+            const sh = `0 8px ${$("sb").value}px ${hexA(bg, parseInt($("so").value, 10) / 100)}`;
+            const css = `padding: ${p};\nbackground: ${bg};\ncolor: ${fg};\nborder: none;\nborder-radius: ${r};\nfont-size: ${fs};\nfont-weight: 600;\ncursor: pointer;\nbox-shadow: ${sh};`;
+            Object.assign($("prev").style, { padding: p, background: bg, color: fg, borderRadius: r, fontSize: fs, boxShadow: sh });
+            $("css").value = ".btn {\n  " + css.split("\n").join("\n  ") + "\n}";
+        }
+        ["bg","fg","py","px","fs","r","sb","so"].forEach(id => $(id).addEventListener("input", paint));
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("css").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+        paint();
+
+    })();
+    </script>
+</body>
+</html>

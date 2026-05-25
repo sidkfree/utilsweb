@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>User-Agent Parser — UtilsWeb</title>
+    <meta name="description" content="Parse a User-Agent string into browser, OS, device.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #D946EF, #3B82F6);">🌍</div>
+                    <div>
+                        <h1>User-Agent Parser</h1>
+                        <p class="tagline">Parse a User-Agent string into browser, OS, device.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>User-Agent string</label>
+                    <textarea id="ua" rows="3" style="font-family:ui-monospace,monospace;font-size:13px;"></textarea>
+                    <button class="btn primary" id="meBtn" type="button" style="margin-top:10px;">Use my browser's UA</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;">
+                    <table style="width:100%;font-size:14px;"><tbody id="rows"></tbody></table>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Lightweight regex parser — matches the most common browser/OS strings. For full coverage use a library like ua-parser-js.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function parse(ua) {
+            const browsers = [
+                { name: "Edge", re: /Edg\/([\d.]+)/ },
+                { name: "Opera", re: /OPR\/([\d.]+)/ },
+                { name: "Chrome", re: /Chrome\/([\d.]+)/ },
+                { name: "Firefox", re: /Firefox\/([\d.]+)/ },
+                { name: "Safari", re: /Version\/([\d.]+).*Safari/ },
+                { name: "IE", re: /MSIE ([\d.]+)|Trident.*rv:([\d.]+)/ },
+            ];
+            const oses = [
+                { name: "Windows 11", re: /Windows NT 10\.0/ },
+                { name: "macOS",       re: /Mac OS X ([\d_]+)/ },
+                { name: "Android",     re: /Android ([\d.]+)/ },
+                { name: "iOS",         re: /OS ([\d_]+) like Mac OS X/ },
+                { name: "Linux",       re: /Linux/ },
+            ];
+            const b = browsers.find(x => x.re.test(ua));
+            const o = oses.find(x => x.re.test(ua));
+            const dev = /Mobile|Android|iPhone/.test(ua) ? "Mobile" : /Tablet|iPad/.test(ua) ? "Tablet" : "Desktop";
+            const bot = /bot|crawler|spider|GPTBot/i.test(ua);
+            return {
+                Browser: b ? `${b.name} ${(ua.match(b.re) || [])[1] || ""}` : "Unknown",
+                OS:      o ? `${o.name}` : "Unknown",
+                Device:  dev,
+                Bot:     bot ? "Yes" : "No",
+            };
+        }
+        function paint() {
+            const r = parse($("ua").value);
+            $("rows").innerHTML = Object.entries(r).map(([k, v]) => `<tr><td style='padding:6px;color:#9aa1b6;'>${k}</td><td style='text-align:right;padding:6px;'>${v}</td></tr>`).join("");
+        }
+        $("ua").addEventListener("input", paint);
+        $("meBtn").addEventListener("click", () => { $("ua").value = navigator.userAgent; paint(); });
+        $("ua").value = navigator.userAgent; paint();
+
+    })();
+    </script>
+</body>
+</html>

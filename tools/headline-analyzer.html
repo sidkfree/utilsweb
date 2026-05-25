@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Headline Analyzer — UtilsWeb</title>
+    <meta name="description" content="Score a headline on length, power words, sentiment and emotional pull.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F43F5E, #EF4444);">📰</div>
+                    <div>
+                        <h1>Headline Analyzer</h1>
+                        <p class="tagline">Score a headline on length, power words, sentiment and emotional pull.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Headline</label>
+                    <input type="text" id="h" value="10 surprising things you can do with utilsweb today">
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:14px;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;text-align:center;">
+                        <div><strong id="score" style="font-size:32px;color:#10B981;"></strong><div>Score / 100</div></div>
+                        <div><strong id="words" style="font-size:22px;"></strong><div>Words</div></div>
+                        <div><strong id="chars" style="font-size:22px;"></strong><div>Chars</div></div>
+                        <div><strong id="pw" style="font-size:22px;color:#F59E0B;"></strong><div>Power words</div></div>
+                    </div>
+                    <div id="tips" style="color:#9aa1b6;font-size:13px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Heuristic score from length, power-word count, numeric presence, and question framing. Useful as a quick gut check, not a guarantee.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const POWER = new Set("amazing astonishing breakthrough bold brave brilliant deal effortless epic essential exclusive expert fast free genuine genius greatest guaranteed huge impressive incredible insane massive new powerful premium proven quick rare remarkable revealed revolutionary secret stunning surprising tested transform ultimate unbelievable unique urgent vital winner".split(" "));
+        const EMOTION = new Set("awe excitement fear love joy anger pride trust hope outrage shocking".split(" "));
+        const NUMERIC = /\b\d+\b/;
+        function score(h) {
+            const words = h.toLowerCase().match(/\b[a-z]+\b/g) || [];
+            const chars = h.length;
+            const pw = words.filter(w => POWER.has(w)).length;
+            const emo = words.filter(w => EMOTION.has(w)).length;
+            let s = 40;
+            if (chars >= 40 && chars <= 70) s += 20; else if (chars >= 30 && chars <= 80) s += 10;
+            if (words.length >= 6 && words.length <= 12) s += 15;
+            if (NUMERIC.test(h)) s += 10;
+            s += Math.min(15, pw * 5);
+            s += Math.min(10, emo * 5);
+            if (/^how |^why |^what /i.test(h)) s += 5;
+            return { score: Math.min(100, s), pw, emo, words: words.length, chars };
+        }
+        function update() {
+            const r = score($("h").value);
+            $("score").textContent = r.score;
+            $("score").style.color = r.score >= 75 ? "#10B981" : r.score >= 50 ? "#F59E0B" : "#EF4444";
+            $("words").textContent = r.words;
+            $("chars").textContent = r.chars;
+            $("pw").textContent = r.pw;
+            const tips = [];
+            if (r.chars < 30) tips.push("Too short — aim for 40-70 chars.");
+            if (r.chars > 80) tips.push("Too long — most SERPs cut at 60.");
+            if (!r.pw)   tips.push("Add a power word (amazing, proven, secret, ultimate, free...).");
+            if (!NUMERIC.test($("h").value)) tips.push("Numbers (10 ways, 5 reasons) boost CTR.");
+            $("tips").innerHTML = tips.map(t => "• " + t).join("<br>");
+        }
+        $("h").addEventListener("input", update);
+        update();
+
+    })();
+    </script>
+</body>
+</html>

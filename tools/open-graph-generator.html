@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Open Graph Preview — UtilsWeb</title>
+    <meta name="description" content="Live preview of how your URL looks on Facebook / LinkedIn / iMessage.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #8B5CF6, #EC4899);">📣</div>
+                    <div>
+                        <h1>Open Graph Preview</h1>
+                        <p class="tagline">Live preview of how your URL looks on Facebook / LinkedIn / iMessage.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr;gap:10px;">
+                        <div><label>URL</label><input type="url" id="u" value="https://utilsweb.com"></div>
+                        <div><label>Title</label><input type="text" id="t" value="UtilsWeb — tools that just work"></div>
+                        <div><label>Description</label><textarea id="d" rows="2">Free, browser-only utilities. No upload, no signup.</textarea></div>
+                        <div><label>Image URL</label><input type="url" id="img" value="https://picsum.photos/1200/630"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:14px;">
+                    <div id="card" style="max-width:520px;margin:0 auto;border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;background:rgba(0,0,0,.3);">
+                        <img id="cardImg" style="width:100%;display:block;background:rgba(255,255,255,.04);">
+                        <div style="padding:14px;">
+                            <div id="cardUrl" style="font-size:12px;color:#9aa1b6;text-transform:uppercase;"></div>
+                            <div id="cardTitle" style="font-weight:600;margin-top:4px;"></div>
+                            <div id="cardDesc" style="color:#9aa1b6;font-size:13px;margin-top:4px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Visual approximation of an OG-tagged link on FB / LinkedIn. To validate the real tags on your site, use FB's Sharing Debugger after publishing.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function host(u) { try { return new URL(u).hostname; } catch { return u; } }
+        function paint() {
+            $("cardImg").src = $("img").value;
+            $("cardUrl").textContent = host($("u").value);
+            $("cardTitle").textContent = $("t").value;
+            $("cardDesc").textContent = $("d").value;
+        }
+        ["u","t","d","img"].forEach(id => $(id).addEventListener("input", paint));
+        paint();
+
+    })();
+    </script>
+</body>
+</html>

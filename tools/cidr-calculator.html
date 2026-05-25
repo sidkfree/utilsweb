@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>CIDR / Subnet Calculator — UtilsWeb</title>
+    <meta name="description" content="Network, broadcast, host range, mask for any IPv4 CIDR.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #3B82F6, #8B5CF6);">🌐</div>
+                    <div>
+                        <h1>CIDR / Subnet Calculator</h1>
+                        <p class="tagline">Network, broadcast, host range, mask for any IPv4 CIDR.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>CIDR</label>
+                    <input type="text" id="cidr" value="192.168.1.0/24" style="font-family:ui-monospace,monospace;">
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;">
+                    <table style="width:100%;font-size:13px;"><tbody id="rows"></tbody></table>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>IPv4 bit math — network = ip & mask, broadcast = network | ~mask. /31 and /32 are treated as point-to-point (no host gap).</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function ipToInt(s) {
+            return s.split(".").reduce((a, o) => (a << 8 >>> 0) + parseInt(o, 10), 0) >>> 0;
+        }
+        function intToIp(n) {
+            return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join(".");
+        }
+        function calc() {
+            const v = $("cidr").value.trim();
+            const m = v.match(/^(\d+\.\d+\.\d+\.\d+)\/(\d+)$/);
+            if (!m) { $("rows").innerHTML = "<tr><td style='padding:6px;color:#EF4444;'>Bad CIDR — expected 1.2.3.4/24</td></tr>"; return; }
+            const ip = ipToInt(m[1]);
+            const bits = parseInt(m[2], 10);
+            if (bits < 0 || bits > 32) { $("rows").innerHTML = "<tr><td style='padding:6px;color:#EF4444;'>Prefix must be 0-32</td></tr>"; return; }
+            const mask = bits === 0 ? 0 : (0xFFFFFFFF << (32 - bits)) >>> 0;
+            const net = (ip & mask) >>> 0;
+            const bcast = (net | (~mask >>> 0)) >>> 0;
+            const total = Math.pow(2, 32 - bits);
+            const usable = bits >= 31 ? total : total - 2;
+            const rows = [
+                ["Network",       intToIp(net)],
+                ["Broadcast",     intToIp(bcast)],
+                ["First host",    bits >= 31 ? intToIp(net) : intToIp(net + 1)],
+                ["Last host",     bits >= 31 ? intToIp(bcast) : intToIp(bcast - 1)],
+                ["Netmask",       intToIp(mask)],
+                ["Wildcard",      intToIp(~mask >>> 0)],
+                ["Total addrs",   total.toLocaleString()],
+                ["Usable hosts",  usable.toLocaleString()],
+                ["CIDR notation", intToIp(net) + "/" + bits],
+            ];
+            $("rows").innerHTML = rows.map(([k, v]) =>
+                `<tr><td style='padding:6px;color:#9aa1b6;'>${k}</td><td style='text-align:right;padding:6px;font-family:ui-monospace,monospace;color:#06B6D4;'>${v}</td></tr>`
+            ).join("");
+        }
+        $("cidr").addEventListener("input", calc);
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

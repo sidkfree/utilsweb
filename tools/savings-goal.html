@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Savings Goal Calculator — UtilsWeb</title>
+    <meta name="description" content="How much to set aside each month to hit a savings target by a date.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #06B6D4, #10B981);">🎯</div>
+                    <div>
+                        <h1>Savings Goal Calculator</h1>
+                        <p class="tagline">How much to set aside each month to hit a savings target by a date.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Target amount</label><input type="number" id="t" value="20000"></div>
+                        <div><label>Months to save</label><input type="number" id="m" value="24"></div>
+                        <div><label>Already saved</label><input type="number" id="s" value="2000"></div>
+                        <div><label>Annual rate %</label><input type="number" id="r" value="4" step="0.1"></div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Calculate</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;text-align:center;">
+                    <div><strong id="need" style="font-size:28px;color:#10B981;"></strong><div>Need to save per month</div></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Solves the future-value annuity formula for the periodic payment.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("runBtn").addEventListener("click", () => {
+            const T = parseFloat($("t").value), n = parseFloat($("m").value);
+            const S = parseFloat($("s").value) || 0;
+            const i = parseFloat($("r").value) / 100 / 12;
+            if (!(n > 0)) return showError("Months > 0 please.");
+            const needFromContrib = T - S * Math.pow(1 + i, n);
+            let pmt;
+            if (i === 0) pmt = needFromContrib / n;
+            else pmt = needFromContrib * i / (Math.pow(1 + i, n) - 1);
+            $("need").textContent = "$" + Math.max(0, pmt).toFixed(2);
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

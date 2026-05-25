@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Running Pace Calculator — UtilsWeb</title>
+    <meta name="description" content="Pace, time, distance — give two, get the third. Splits for popular races.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #059669, #84CC16);">🏃</div>
+                    <div>
+                        <h1>Running Pace Calculator</h1>
+                        <p class="tagline">Pace, time, distance — give two, get the third. Splits for popular races.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Distance (km)</label><input type="number" id="d" value="10" step="0.01"></div>
+                        <div><label>Time (mm:ss)</label><input type="text" id="t" value="55:00" placeholder="hh:mm:ss"></div>
+                        <div><label>Pace (min:sec /km)</label><input type="text" id="p" placeholder="auto"></div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Calculate</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <div id="meta" style="text-align:center;color:#9aa1b6;"></div>
+                    <table style="width:100%;font-size:14px;"><tbody id="rows"></tbody></table>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Pace = time / distance. From a known pace, all standard race times are projected.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function parseTime(s) {
+            const parts = s.trim().split(":").map(Number);
+            if (parts.some(isNaN)) return NaN;
+            if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+            if (parts.length === 2) return parts[0]*60 + parts[1];
+            return parts[0];
+        }
+        function fmt(sec) {
+            sec = Math.round(sec);
+            const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+            return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s).padStart(2, "0");
+        }
+        $("runBtn").addEventListener("click", () => {
+            const d = parseFloat($("d").value);
+            const tSec = parseTime($("t").value);
+            let paceSec = parseTime($("p").value);
+            if (d > 0 && tSec > 0) paceSec = tSec / d;
+            else if (d > 0 && paceSec > 0) { /* compute time */ $("t").value = fmt(d * paceSec); }
+            if (!paceSec) return showError("Need distance + (time or pace).");
+            $("p").value = fmt(paceSec);
+            $("meta").textContent = `Pace: ${fmt(paceSec)} /km  •  Speed: ${(3600 / paceSec).toFixed(2)} km/h`;
+            const races = [["5K", 5], ["10K", 10], ["Half marathon", 21.0975], ["Marathon", 42.195]];
+            $("rows").innerHTML = races.map(([n, km]) =>
+                `<tr><td style='padding:6px;color:#9aa1b6;'>${n}</td><td style='text-align:right;padding:6px;color:#10B981;'>${fmt(km * paceSec)}</td></tr>`
+            ).join("");
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

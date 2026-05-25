@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Oven Temp Converter — UtilsWeb</title>
+    <meta name="description" content="Convert °F ↔ °C ↔ Gas Mark with descriptive labels.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EAB308, #EF4444);">♨️</div>
+                    <div>
+                        <h1>Oven Temp Converter</h1>
+                        <p class="tagline">Convert °F ↔ °C ↔ Gas Mark with descriptive labels.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>°C</label><input type="number" id="c" value="180"></div>
+                        <div><label>°F</label><input type="number" id="f"></div>
+                        <div><label>Gas mark</label><input type="text" id="g"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div id="label" style="font-size:20px;color:#F59E0B;font-weight:600;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>°F = °C × 9/5 + 32. Gas mark snaps to the nearest standard step.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const GAS = [[110,"¼"],[120,"½"],[140,"1"],[150,"2"],[170,"3"],[180,"4"],[190,"5"],[200,"6"],[220,"7"],[230,"8"],[240,"9"]];
+        function label(c) {
+            return c < 130 ? "Very slow" : c < 165 ? "Slow / Cool" : c < 180 ? "Moderate" : c < 200 ? "Moderate-hot" : c < 220 ? "Hot" : c < 240 ? "Very hot" : "Extreme";
+        }
+        let inside = false;
+        function fromC() { if (inside) return; const c = parseFloat($("c").value); if (isNaN(c)) return; inside = true; $("f").value = Math.round(c * 9 / 5 + 32); const m = GAS.reduce((a, b) => Math.abs(b[0]-c) < Math.abs(a[0]-c) ? b : a); $("g").value = m[1]; $("label").textContent = label(c); inside = false; }
+        function fromF() { if (inside) return; const f = parseFloat($("f").value); if (isNaN(f)) return; $("c").value = Math.round((f - 32) * 5 / 9); fromC(); }
+        $("c").addEventListener("input", fromC);
+        $("f").addEventListener("input", fromF);
+        fromC();
+
+    })();
+    </script>
+</body>
+</html>

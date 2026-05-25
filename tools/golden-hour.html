@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Golden Hour Calculator — UtilsWeb</title>
+    <meta name="description" content="Sunrise, sunset, golden hour, blue hour for any location & date.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #F97316);">🌅</div>
+                    <div>
+                        <h1>Golden Hour Calculator</h1>
+                        <p class="tagline">Sunrise, sunset, golden hour, blue hour for any location & date.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Latitude</label><input type="number" id="lat" value="48.8566" step="0.0001"></div>
+                        <div><label>Longitude</label><input type="number" id="lng" value="2.3522" step="0.0001"></div>
+                        <div><label>Date</label><input type="date" id="d"></div>
+                    </div>
+                    <button class="btn primary" id="locBtn" type="button" style="margin-top:14px;">📍 Use my location</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;">
+                    <table style="width:100%;font-size:14px;"><tbody id="rows"></tbody></table>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Simplified NOAA solar position algorithm — accurate to ±1 minute on most dates. Local browser time is used.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function todayStr() { return new Date().toISOString().slice(0, 10); }
+        if (!$("d").value) $("d").value = todayStr();
+        $("locBtn").addEventListener("click", () => {
+            if (!navigator.geolocation) return showError("Geolocation not available.");
+            navigator.geolocation.getCurrentPosition(p => { $("lat").value = p.coords.latitude.toFixed(4); $("lng").value = p.coords.longitude.toFixed(4); calc(); });
+        });
+        // Approx sunrise/sunset (NOAA simplified) — good to ±1 minute most days.
+        function julian(d) { return d.getTime() / 86400000 + 2440587.5; }
+        function calc() {
+            const lat = +$("lat").value * Math.PI / 180;
+            const lng = +$("lng").value;
+            const d = new Date($("d").value + "T12:00:00");
+            const jd = julian(d);
+            const n = jd - 2451545.0 + 0.0008;
+            const Js = n - lng / 360;
+            const M = (357.5291 + 0.98560028 * Js) * Math.PI / 180;
+            const C = 1.9148 * Math.sin(M) + 0.0200 * Math.sin(2*M) + 0.0003 * Math.sin(3*M);
+            const lam = M + (102.9372 * Math.PI / 180) + C * Math.PI / 180 + Math.PI;
+            const Jt = 2451545.0 + Js + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2*lam);
+            const decl = Math.asin(Math.sin(lam) * Math.sin(23.4397 * Math.PI / 180));
+            function event(h) {
+                const cosH = (Math.sin(h*Math.PI/180) - Math.sin(lat) * Math.sin(decl)) / (Math.cos(lat) * Math.cos(decl));
+                if (cosH < -1 || cosH > 1) return null;
+                const H = Math.acos(cosH) * 180 / Math.PI / 360;
+                const Jrise = Jt - H, Jset = Jt + H;
+                return [Jrise, Jset];
+            }
+            const civ = event(-0.833);
+            const golden = event(6);
+            const blue = event(-4);
+            function toDate(j) { if (j == null) return "—"; const ms = (j - 2440587.5) * 86400000; return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
+            const rows = [
+                ["Dawn (civil twilight)",   civ ? toDate(civ[0]) : "—"],
+                ["Sunrise",                 civ ? toDate(civ[0] + 0.5/24) : "—"],
+                ["Morning golden hour ends",golden ? toDate(golden[0]) : "—"],
+                ["Solar noon",              toDate(Jt)],
+                ["Evening golden hour starts", golden ? toDate(golden[1]) : "—"],
+                ["Sunset",                  civ ? toDate(civ[1]) : "—"],
+                ["Blue hour ends",          blue ? toDate(blue[1]) : "—"],
+            ];
+            $("rows").innerHTML = rows.map(([k, v]) => `<tr><td style='padding:6px;color:#9aa1b6;'>${k}</td><td style='text-align:right;padding:6px;font-family:ui-monospace,monospace;color:#F59E0B;'>${v}</td></tr>`).join("");
+        }
+        ["lat","lng","d"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

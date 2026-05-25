@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>AES Encryption — UtilsWeb</title>
+    <meta name="description" content="AES-GCM 256-bit encrypt / decrypt for text. Browser-native crypto.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #D946EF, #06B6D4);">🔒</div>
+                    <div>
+                        <h1>AES Encryption</h1>
+                        <p class="tagline">AES-GCM 256-bit encrypt / decrypt for text. Browser-native crypto.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:flex;gap:18px;">
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="radio" name="m" value="enc" checked> Encrypt</label>
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="radio" name="m" value="dec"> Decrypt</label>
+                    </div>
+                    <label style="margin-top:10px;">Password</label>
+                    <input type="password" id="pw" placeholder="strong password" style="font-family:ui-monospace,monospace;">
+                    <label style="margin-top:10px;">Input</label>
+                    <textarea id="inp" rows="6" style="font-family:ui-monospace,monospace;"></textarea>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Run</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="6" readonly style="font-family:ui-monospace,monospace;"></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>PBKDF2-SHA256 (200k iterations) derives a 256-bit AES-GCM key from your password. Output = base64(salt | iv | ciphertext). Browser-native WebCrypto — no library, no upload.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        async function deriveKey(pw, salt) {
+            const baseKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+            return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 200000, hash: "SHA-256" }, baseKey, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+        }
+        function toB64(u8) { let s = ""; for (const b of u8) s += String.fromCharCode(b); return btoa(s); }
+        function fromB64(s) { const bin = atob(s); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return u8; }
+        $("runBtn").addEventListener("click", async () => {
+            clearError();
+            const pw = $("pw").value;
+            if (!pw) return showError("Password required.");
+            const mode = document.querySelector('input[name="m"]:checked').value;
+            try {
+                if (mode === "enc") {
+                    const salt = crypto.getRandomValues(new Uint8Array(16));
+                    const iv = crypto.getRandomValues(new Uint8Array(12));
+                    const key = await deriveKey(pw, salt);
+                    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode($("inp").value));
+                    const out = new Uint8Array(16 + 12 + ct.byteLength);
+                    out.set(salt, 0); out.set(iv, 16); out.set(new Uint8Array(ct), 28);
+                    $("out").value = toB64(out);
+                } else {
+                    const blob = fromB64($("inp").value.replace(/\s+/g, ""));
+                    const salt = blob.slice(0, 16), iv = blob.slice(16, 28), ct = blob.slice(28);
+                    const key = await deriveKey(pw, salt);
+                    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+                    $("out").value = new TextDecoder().decode(pt);
+                }
+                $("resultBox").style.display = "flex";
+            } catch (e) { showError("Decryption failed (wrong password or corrupted data)."); }
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

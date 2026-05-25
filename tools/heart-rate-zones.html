@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Heart Rate Zones — UtilsWeb</title>
+    <meta name="description" content="Training zones from your age (and optional resting HR via Karvonen).">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EF4444, #EC4899);">❤️</div>
+                    <div>
+                        <h1>Heart Rate Zones</h1>
+                        <p class="tagline">Training zones from your age (and optional resting HR via Karvonen).</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Age</label><input type="number" id="age" value="30"></div>
+                        <div><label>Resting HR (optional)</label><input type="number" id="rest" placeholder="60"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;">
+                    <div style="text-align:center;color:#9aa1b6;">Max HR: <strong id="hrmax" style="color:#fff;font-size:18px;"></strong> bpm</div>
+                    <table style="width:100%;font-size:14px;"><tbody id="rows"></tbody></table>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Max HR ≈ 220 − age. With a resting HR, switches to the Karvonen formula: target = rest + (max − rest) × intensity.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const ZONES = [
+            { name: "1 Recovery", lo: 0.50, hi: 0.60, color: "#22C55E" },
+            { name: "2 Endurance", lo: 0.60, hi: 0.70, color: "#06B6D4" },
+            { name: "3 Tempo", lo: 0.70, hi: 0.80, color: "#3B82F6" },
+            { name: "4 Threshold", lo: 0.80, hi: 0.90, color: "#F59E0B" },
+            { name: "5 VO2 max", lo: 0.90, hi: 1.00, color: "#EF4444" },
+        ];
+        function calc() {
+            const age = parseFloat($("age").value);
+            const rest = parseFloat($("rest").value);
+            const hrmax = 220 - age;
+            $("hrmax").textContent = hrmax;
+            $("rows").innerHTML = ZONES.map(z => {
+                let lo, hi;
+                if (rest > 0) {
+                    lo = Math.round(rest + (hrmax - rest) * z.lo);
+                    hi = Math.round(rest + (hrmax - rest) * z.hi);
+                } else {
+                    lo = Math.round(hrmax * z.lo);
+                    hi = Math.round(hrmax * z.hi);
+                }
+                return `<tr><td style='padding:8px;color:${z.color};font-weight:600;'>${z.name}</td><td style='text-align:right;padding:8px;font-family:ui-monospace,monospace;'>${lo} – ${hi} bpm</td></tr>`;
+            }).join("");
+        }
+        ["age","rest"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>ERC-20 Unit Converter — UtilsWeb</title>
+    <meta name="description" content="Convert between raw integer units and human-readable amounts for any ERC-20 token.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F97316, #EF4444);">🪙</div>
+                    <div>
+                        <h1>ERC-20 Unit Converter</h1>
+                        <p class="tagline">Convert between raw integer units and human-readable amounts for any ERC-20 token.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Decimals</label><input type="number" id="dec" value="18" min="0" max="30"></div>
+                        <div><label>Raw (integer)</label><input type="text" id="raw" value="1500000000000000000" style="font-family:ui-monospace,monospace;"></div>
+                        <div><label>Human</label><input type="text" id="hum" style="font-family:ui-monospace,monospace;"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;"></div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>raw = human × 10^decimals. USDC uses 6, most tokens use 18. BigInt math = no precision loss.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        let inside = false;
+        function fromRaw() {
+            try {
+                const d = parseInt($("dec").value, 10);
+                const r = BigInt($("raw").value);
+                const div = 10n ** BigInt(d);
+                const whole = r / div, frac = r % div;
+                const s = whole.toString() + (frac > 0n ? "." + frac.toString().padStart(d, "0").replace(/0+$/, "") : "");
+                inside = true; $("hum").value = s; inside = false;
+            } catch {}
+        }
+        function fromHum() {
+            if (inside) return;
+            const d = parseInt($("dec").value, 10);
+            const [w, f = ""] = $("hum").value.split(".");
+            try {
+                const whole = BigInt(w || "0") * (10n ** BigInt(d));
+                const frac = BigInt((f + "0".repeat(d)).slice(0, d) || "0");
+                $("raw").value = (whole + frac).toString();
+            } catch {}
+        }
+        $("raw").addEventListener("input", fromRaw);
+        $("hum").addEventListener("input", fromHum);
+        $("dec").addEventListener("input", fromRaw);
+        fromRaw();
+
+    })();
+    </script>
+</body>
+</html>

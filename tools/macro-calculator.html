@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Macro Calculator — UtilsWeb</title>
+    <meta name="description" content="Protein / fat / carbs split to fit your daily calorie target.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #10B981, #06B6D4);">🥗</div>
+                    <div>
+                        <h1>Macro Calculator</h1>
+                        <p class="tagline">Protein / fat / carbs split to fit your daily calorie target.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;">
+                        <div><label>Calories</label><input type="number" id="cal" value="2400"></div>
+                        <div><label>Protein %</label><input type="number" id="p" value="30"></div>
+                        <div><label>Fat %</label><input type="number" id="f" value="30"></div>
+                        <div><label>Carbs %</label><input type="number" id="c" value="40"></div>
+                    </div>
+                    <div class="row" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                        <button class="btn primary" data-p="40" data-f="30" data-c="30">High protein 40/30/30</button>
+                        <button class="btn primary" data-p="30" data-f="40" data-c="30">Keto-leaning 30/40/30</button>
+                        <button class="btn primary" data-p="20" data-f="20" data-c="60">Endurance 20/20/60</button>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;text-align:center;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                        <div><strong id="gP" style="font-size:24px;color:#EC4899;"></strong><div>Protein (4 kcal/g)</div></div>
+                        <div><strong id="gF" style="font-size:24px;color:#F59E0B;"></strong><div>Fat (9 kcal/g)</div></div>
+                        <div><strong id="gC" style="font-size:24px;color:#10B981;"></strong><div>Carbs (4 kcal/g)</div></div>
+                    </div>
+                    <div id="warn" style="color:#F59E0B;font-size:12px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Grams = (calories × ratio%) ÷ kcal-per-gram (P:4, F:9, C:4).</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const cal = parseFloat($("cal").value) || 0;
+            const p = parseFloat($("p").value) || 0;
+            const f = parseFloat($("f").value) || 0;
+            const c = parseFloat($("c").value) || 0;
+            const sum = p + f + c;
+            $("warn").textContent = sum === 100 ? "" : `Percentages add to ${sum}, should be 100.`;
+            $("gP").textContent = Math.round(cal * p / 100 / 4) + " g";
+            $("gF").textContent = Math.round(cal * f / 100 / 9) + " g";
+            $("gC").textContent = Math.round(cal * c / 100 / 4) + " g";
+        }
+        ["cal","p","f","c"].forEach(id => $(id).addEventListener("input", calc));
+        document.querySelectorAll("[data-p]").forEach(b => b.addEventListener("click", (e) => {
+            e.preventDefault();
+            $("p").value = b.dataset.p; $("f").value = b.dataset.f; $("c").value = b.dataset.c; calc();
+        }));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

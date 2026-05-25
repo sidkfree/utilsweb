@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>UTM Link Builder — UtilsWeb</title>
+    <meta name="description" content="Build trackable campaign URLs for Google Analytics / GA4.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F97316, #EAB308);">🧪</div>
+                    <div>
+                        <h1>UTM Link Builder</h1>
+                        <p class="tagline">Build trackable campaign URLs for Google Analytics / GA4.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div style="grid-column:1/-1;"><label>Website URL</label><input type="url" id="u" value="https://utilsweb.com" required></div>
+                        <div><label>utm_source *</label><input type="text" id="s" value="twitter"></div>
+                        <div><label>utm_medium *</label><input type="text" id="m" value="social"></div>
+                        <div><label>utm_campaign *</label><input type="text" id="c" value="launch_2026"></div>
+                        <div><label>utm_term</label><input type="text" id="t" placeholder="paid keyword"></div>
+                        <div style="grid-column:1/-1;"><label>utm_content</label><input type="text" id="ct" placeholder="ad variant"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="3" readonly style="font-family:ui-monospace,monospace;font-size:13px;word-break:break-all;"></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Appends utm_source / utm_medium / utm_campaign / utm_term / utm_content to your URL — the GA / GA4 convention for campaign tracking.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function build() {
+            try {
+                const u = new URL($("u").value);
+                const params = {
+                    utm_source:   $("s").value,
+                    utm_medium:   $("m").value,
+                    utm_campaign: $("c").value,
+                    utm_term:     $("t").value,
+                    utm_content:  $("ct").value,
+                };
+                for (const [k, v] of Object.entries(params)) {
+                    if (v) u.searchParams.set(k, v);
+                    else u.searchParams.delete(k);
+                }
+                $("out").value = u.toString();
+            } catch { $("out").value = "Invalid URL"; }
+        }
+        ["u","s","m","c","t","ct"].forEach(id => $(id).addEventListener("input", build));
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+        build();
+
+    })();
+    </script>
+</body>
+</html>

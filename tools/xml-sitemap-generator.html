@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>XML Sitemap Generator — UtilsWeb</title>
+    <meta name="description" content="Paste a list of URLs, get a valid sitemap.xml.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #06B6D4, #3B82F6);">🗺️</div>
+                    <div>
+                        <h1>XML Sitemap Generator</h1>
+                        <p class="tagline">Paste a list of URLs, get a valid sitemap.xml.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>URLs (one per line)</label>
+                    <textarea id="inp" rows="10" placeholder="https://example.com/
+https://example.com/about
+https://example.com/blog/post-1"></textarea>
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:10px;">
+                        <div>
+                            <label>Change frequency</label>
+                            <select id="cf"><option>always</option><option>hourly</option><option>daily</option><option selected>weekly</option><option>monthly</option><option>yearly</option><option>never</option></select>
+                        </div>
+                        <div>
+                            <label>Priority</label>
+                            <input type="number" id="pr" value="0.8" min="0" max="1" step="0.1">
+                        </div>
+                        <div>
+                            <label>Last modified</label>
+                            <input type="date" id="lm">
+                        </div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Generate</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="16" readonly style="font-family:ui-monospace,monospace;font-size:12px;"></textarea>
+                    <div style="display:flex;gap:10px;"><a class="btn primary" id="dl" download="sitemap.xml">⬇ Download</a><button class="btn primary" id="copyBtn">⧉ Copy</button></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Each URL gets a <code>&lt;url&gt;</code> entry with lastmod, changefreq, priority. Submit the file in Google Search Console after upload.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("runBtn").addEventListener("click", () => {
+            const urls = $("inp").value.split("\n").map(s => s.trim()).filter(Boolean);
+            if (!urls.length) return showError("Paste at least one URL.");
+            const cf = $("cf").value, pr = parseFloat($("pr").value) || 0.5;
+            const lm = $("lm").value || new Date().toISOString().slice(0, 10);
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+                urls.map(u => `  <url>\n    <loc>${u}</loc>\n    <lastmod>${lm}</lastmod>\n    <changefreq>${cf}</changefreq>\n    <priority>${pr.toFixed(1)}</priority>\n  </url>`).join("\n") +
+                `\n</urlset>`;
+            $("out").value = xml;
+            $("dl").href = URL.createObjectURL(new Blob([xml], { type: "application/xml" }));
+            $("resultBox").style.display = "flex";
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

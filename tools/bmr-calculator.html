@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>BMR Calculator — UtilsWeb</title>
+    <meta name="description" content="Basal Metabolic Rate — calories you'd burn at total rest. Mifflin–St Jeor formula.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EC4899, #EF4444);">🔥</div>
+                    <div>
+                        <h1>BMR Calculator</h1>
+                        <p class="tagline">Basal Metabolic Rate — calories you'd burn at total rest. Mifflin–St Jeor formula.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;">
+                        <div><label>Age</label><input type="number" id="age" value="30"></div>
+                        
+                        <div>
+                            <label>Sex</label>
+                            <select id="sex"><option value="m" selected>Male</option><option value="f">Female</option></select>
+                        </div>
+                        <div><label>Weight kg</label><input type="number" id="w" value="75" step="0.1"></div>
+                        <div><label>Height cm</label><input type="number" id="h" value="178"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;text-align:center;">
+                    <div><strong id="bmr" style="font-size:36px;color:#EF4444;"></strong> <span style="color:#9aa1b6;">kcal/day</span></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Mifflin–St Jeor (1990) — currently the most accurate BMR formula for healthy adults.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const age = parseFloat($("age").value), w = parseFloat($("w").value), h = parseFloat($("h").value);
+            const bmr = 10 * w + 6.25 * h - 5 * age + ($("sex").value === "m" ? 5 : -161);
+            $("bmr").textContent = Math.round(bmr);
+        }
+        ["age","sex","w","h"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

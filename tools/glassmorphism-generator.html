@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Glassmorphism Generator — UtilsWeb</title>
+    <meta name="description" content="Frosted-glass card effect — tune blur, opacity, border. Copy the CSS.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #6366F1, #8B5CF6);">🧊</div>
+                    <div>
+                        <h1>Glassmorphism Generator</h1>
+                        <p class="tagline">Frosted-glass card effect — tune blur, opacity, border. Copy the CSS.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;">
+                        <div><label>Blur (px)</label><input type="number" id="bl" value="20" min="0" max="60"></div>
+                        <div><label>Opacity</label><input type="range" id="op" min="0" max="100" value="20"></div>
+                        <div><label>Saturate %</label><input type="number" id="sat" value="180" min="100" max="300"></div>
+                        <div><label>Border</label><input type="color" id="bc" value="#ffffff"></div>
+                        <div><label>Radius</label><input type="number" id="r" value="16" min="0" max="60"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:14px;align-items:center;">
+                    <div style="padding:30px;background:url('https://picsum.photos/600/400?blur=2') center/cover;border-radius:14px;width:100%;max-width:520px;display:flex;align-items:center;justify-content:center;min-height:240px;">
+                        <div id="box" style="width:240px;height:140px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:18px;">Glass card</div>
+                    </div>
+                    <div style="display:flex;gap:10px;width:100%;"><textarea id="css" rows="6" readonly style="flex:1;font-family:ui-monospace,monospace;font-size:12px;"></textarea><button class="btn primary" id="copyBtn">⧉ Copy</button></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Layered effect: semi-transparent background + <code>backdrop-filter: blur()</code>. Needs a backdrop image / coloured page to be visible.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function paint() {
+            const bl = $("bl").value, op = parseInt($("op").value, 10) / 100, sat = $("sat").value, bc = $("bc").value, r = $("r").value;
+            const props = {
+                background: `rgba(255, 255, 255, ${op})`,
+                backdropFilter: `blur(${bl}px) saturate(${sat}%)`,
+                webkitBackdropFilter: `blur(${bl}px) saturate(${sat}%)`,
+                border: `1px solid ${bc}33`,
+                borderRadius: r + "px",
+                boxShadow: "0 8px 32px rgba(0,0,0,.2)",
+            };
+            Object.assign($("box").style, props);
+            $("css").value = `.glass {\n  background: rgba(255,255,255,${op});\n  backdrop-filter: blur(${bl}px) saturate(${sat}%);\n  -webkit-backdrop-filter: blur(${bl}px) saturate(${sat}%);\n  border: 1px solid ${bc}33;\n  border-radius: ${r}px;\n  box-shadow: 0 8px 32px rgba(0,0,0,.2);\n}`;
+        }
+        ["bl","op","sat","bc","r"].forEach(id => $(id).addEventListener("input", paint));
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("css").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+        paint();
+
+    })();
+    </script>
+</body>
+</html>

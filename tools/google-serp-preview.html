@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Google SERP Preview — UtilsWeb</title>
+    <meta name="description" content="See how your title + description will appear in Google search results.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EC4899, #F97316);">🔎</div>
+                    <div>
+                        <h1>Google SERP Preview</h1>
+                        <p class="tagline">See how your title + description will appear in Google search results.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr;gap:10px;">
+                        <div><label>URL</label><input type="url" id="u" value="https://example.com/blog/my-post"></div>
+                        <div><label>Title (≤ 60 chars)</label><input type="text" id="t" value="My Awesome Post Title — Brand"></div>
+                        <div><label>Description (≤ 160 chars)</label><textarea id="d" rows="3">A compelling description that makes searchers want to click. Keep it useful and under 160 characters.</textarea></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;">
+                    <div style="background:#fff;color:#202124;padding:18px;border-radius:8px;font-family:arial,sans-serif;">
+                        <div id="pUrl" style="color:#202124;font-size:14px;"></div>
+                        <div id="pTitle" style="color:#1a0dab;font-size:20px;margin-top:4px;line-height:1.3;"></div>
+                        <div id="pDesc" style="color:#4d5156;font-size:14px;margin-top:4px;line-height:1.5;"></div>
+                    </div>
+                    <div id="warn" style="color:#F59E0B;font-size:12px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Pure CSS recreation of Google's results layout. Truncation rules approximate the real algorithm (pixel-based, but ~60 chars is a safe guide).</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function fmtUrl(u) {
+            try { const x = new URL(u); return x.hostname + ' › ' + x.pathname.split('/').filter(Boolean).join(' › '); } catch { return u; }
+        }
+        function paint() {
+            const t = $("t").value, d = $("d").value;
+            $("pUrl").textContent   = fmtUrl($("u").value);
+            $("pTitle").textContent = (t.length > 60 ? t.slice(0, 57) + "..." : t);
+            $("pDesc").textContent  = (d.length > 160 ? d.slice(0, 157) + "..." : d);
+            const warn = [];
+            if (t.length > 60) warn.push(`Title is ${t.length} chars — Google may cut at 60.`);
+            if (d.length > 160) warn.push(`Description is ${d.length} chars — Google may cut at 160.`);
+            $("warn").innerHTML = warn.map(w => "⚠ " + w).join("<br>");
+        }
+        ["u","t","d"].forEach(id => $(id).addEventListener("input", paint));
+        paint();
+
+    })();
+    </script>
+</body>
+</html>

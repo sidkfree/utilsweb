@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Paint Calculator — UtilsWeb</title>
+    <meta name="description" content="How much paint to buy for any room — accounts for doors and windows.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #3B82F6, #8B5CF6);">🎨</div>
+                    <div>
+                        <h1>Paint Calculator</h1>
+                        <p class="tagline">How much paint to buy for any room — accounts for doors and windows.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;">
+                        <div><label>Room length (m)</label><input type="number" id="l" value="5" step="0.1"></div>
+                        <div><label>Room width (m)</label><input type="number" id="w" value="4" step="0.1"></div>
+                        <div><label>Ceiling height (m)</label><input type="number" id="h" value="2.5" step="0.1"></div>
+                        <div><label>Doors</label><input type="number" id="d" value="1"></div>
+                        <div><label>Windows</label><input type="number" id="wn" value="2"></div>
+                        <div><label>Coats</label><input type="number" id="c" value="2" min="1" max="4"></div>
+                        <div><label>Coverage (m² per L)</label><input type="number" id="cv" value="10"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><strong id="area" style="font-size:24px;color:#06B6D4;"></strong><div>Paintable area</div></div>
+                        <div><strong id="vol" style="font-size:24px;color:#8B5CF6;"></strong><div>Paint to buy</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Wall area = perimeter × height − doors × 1.8 m² − windows × 1.2 m². Paint = area × coats / coverage.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const l = +$("l").value, w = +$("w").value, h = +$("h").value;
+            const d = +$("d").value, wn = +$("wn").value;
+            const c = +$("c").value, cv = +$("cv").value;
+            const perim = 2 * (l + w);
+            let area = perim * h - d * 2.0 * 0.9 - wn * 1.2 * 1.0; // door 2.0×0.9, window 1.2×1.0
+            area = Math.max(0, area);
+            const vol = area * c / cv;
+            $("area").textContent = area.toFixed(1) + " m²";
+            $("vol").textContent = vol.toFixed(2) + " L";
+        }
+        ["l","w","h","d","wn","c","cv"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

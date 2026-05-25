@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Keyword Density Checker — UtilsWeb</title>
+    <meta name="description" content="Find the most frequent 1-, 2-, and 3-word phrases in a page or text.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #84CC16, #3B82F6);">🔍</div>
+                    <div>
+                        <h1>Keyword Density Checker</h1>
+                        <p class="tagline">Find the most frequent 1-, 2-, and 3-word phrases in a page or text.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Text or HTML</label>
+                    <textarea id="inp" rows="10" placeholder="Paste page content or HTML..."></textarea>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Analyse</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:14px;">
+                    <div id="meta" style="text-align:center;color:#9aa1b6;"></div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;">
+                        <div><strong>1-grams</strong><table id="t1" style="width:100%;font-size:13px;margin-top:4px;"></table></div>
+                        <div><strong>2-grams</strong><table id="t2" style="width:100%;font-size:13px;margin-top:4px;"></table></div>
+                        <div><strong>3-grams</strong><table id="t3" style="width:100%;font-size:13px;margin-top:4px;"></table></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Tokenises your text, strips a built-in English stop-word list, then counts 1/2/3-grams. Aim for 1-3% density on your primary keyword.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const STOP = new Set("the of and a to in is you that it he was for on are with as i his they be at one have this from or had by hot but some what there we can out other were all your when up use word how said an each she which do their time if will way about many then them write would like so these her long make thing see him two has look more day could go come did number sound no most people my over know water than call first who may down side been now find any new work part take get place made live where after back little only round man year came show every good me give our under name very through just form sentence great think say help low line differ turn cause much mean before move right boy old too same tell does set three want air well also play small end put home read hand port large spell add even land here must big high such follow act why ask men change went light kind off need house picture try us again animal point mother world near build self earth father any".split(" "));
+        function tokens(s) {
+            const text = s.replace(/<[^>]+>/g, " ");
+            return text.toLowerCase().match(/[a-z0-9']+/g) || [];
+        }
+        function ngrams(toks, n) {
+            const m = new Map();
+            for (let i = 0; i <= toks.length - n; i++) {
+                const slice = toks.slice(i, i + n);
+                if (n === 1 && STOP.has(slice[0])) continue;
+                const k = slice.join(" ");
+                m.set(k, (m.get(k) || 0) + 1);
+            }
+            return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15);
+        }
+        function render(t, rows, total) {
+            t.innerHTML = rows.map(([k, v]) =>
+                `<tr><td style='padding:4px;color:#9aa1b6;'>${k}</td><td style='text-align:right;padding:4px;'>${v}</td><td style='text-align:right;padding:4px;color:#10B981;'>${(v / total * 100).toFixed(2)}%</td></tr>`
+            ).join("");
+        }
+        $("runBtn").addEventListener("click", () => {
+            const toks = tokens($("inp").value);
+            if (!toks.length) return showError("No text found.");
+            $("meta").textContent = `${toks.length} tokens`;
+            render($("t1"), ngrams(toks, 1), toks.length);
+            render($("t2"), ngrams(toks, 2), toks.length);
+            render($("t3"), ngrams(toks, 3), toks.length);
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

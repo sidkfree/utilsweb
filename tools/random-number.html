@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Random Number Generator — UtilsWeb</title>
+    <meta name="description" content="Generate N unbiased integers in a range — with or without duplicates.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #6366F1, #EC4899);">🎯</div>
+                    <div>
+                        <h1>Random Number Generator</h1>
+                        <p class="tagline">Generate N unbiased integers in a range — with or without duplicates.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;">
+                        <div><label>Min</label><input type="number" id="min" value="1"></div>
+                        <div><label>Max</label><input type="number" id="max" value="100"></div>
+                        <div><label>How many</label><input type="number" id="n" value="10" min="1" max="10000"></div>
+                        <div style="display:flex;align-items:center;"><label style='display:flex;gap:6px;align-items:center;'><input type='checkbox' id='uniq'> Unique only</label></div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Generate</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="8" readonly style="font-family:ui-monospace,monospace;"></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Crypto-random ints; unique mode uses Fisher-Yates over the full range.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("runBtn").addEventListener("click", () => {
+            clearError();
+            const min = parseInt($("min").value, 10), max = parseInt($("max").value, 10);
+            const n = parseInt($("n").value, 10);
+            if (min >= max) return showError("Min must be < max.");
+            const range = max - min + 1;
+            if ($("uniq").checked && n > range) return showError("Unique mode: count must be ≤ range size.");
+            const out = [];
+            if ($("uniq").checked) {
+                const pool = []; for (let i = min; i <= max; i++) pool.push(i);
+                for (let i = pool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [pool[i], pool[j]] = [pool[j], pool[i]];
+                }
+                out.push(...pool.slice(0, n));
+            } else {
+                const buf = new Uint32Array(n); crypto.getRandomValues(buf);
+                for (let i = 0; i < n; i++) out.push(min + (buf[i] % range));
+            }
+            $("out").value = out.join("\n");
+            $("resultBox").style.display = "flex";
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

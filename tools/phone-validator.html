@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Phone Number Validator — UtilsWeb</title>
+    <meta name="description" content="Validate E.164 phone numbers and format them per country.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EF4444, #F97316);">📞</div>
+                    <div>
+                        <h1>Phone Number Validator</h1>
+                        <p class="tagline">Validate E.164 phone numbers and format them per country.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Phone number (E.164 preferred — +1...)</label>
+                    <input type="text" id="ph" value="+33612345678" style="font-family:ui-monospace,monospace;">
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:8px;">
+                    <div id="status" style="font-size:18px;"></div>
+                    <div id="parts" style="color:#9aa1b6;font-size:13px;font-family:ui-monospace,monospace;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Checks the E.164 shape (≤ 15 digits, optional <code>+</code>) and matches the longest-prefix country code from a built-in table.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        // Simple country-code prefix table (most common).
+        const CC = [
+            { c: "1", n: "US/CA" }, { c: "7", n: "RU/KZ" }, { c: "20", n: "EG" }, { c: "27", n: "ZA" }, { c: "30", n: "GR" },
+            { c: "31", n: "NL" }, { c: "32", n: "BE" }, { c: "33", n: "FR" }, { c: "34", n: "ES" }, { c: "36", n: "HU" },
+            { c: "39", n: "IT" }, { c: "40", n: "RO" }, { c: "41", n: "CH" }, { c: "43", n: "AT" }, { c: "44", n: "GB" },
+            { c: "45", n: "DK" }, { c: "46", n: "SE" }, { c: "47", n: "NO" }, { c: "48", n: "PL" }, { c: "49", n: "DE" },
+            { c: "52", n: "MX" }, { c: "55", n: "BR" }, { c: "60", n: "MY" }, { c: "61", n: "AU" }, { c: "62", n: "ID" },
+            { c: "63", n: "PH" }, { c: "64", n: "NZ" }, { c: "65", n: "SG" }, { c: "66", n: "TH" }, { c: "81", n: "JP" },
+            { c: "82", n: "KR" }, { c: "84", n: "VN" }, { c: "86", n: "CN" }, { c: "90", n: "TR" }, { c: "91", n: "IN" },
+            { c: "92", n: "PK" }, { c: "212", n: "MA" }, { c: "213", n: "DZ" }, { c: "216", n: "TN" }, { c: "234", n: "NG" },
+            { c: "351", n: "PT" }, { c: "353", n: "IE" }, { c: "358", n: "FI" }, { c: "420", n: "CZ" }, { c: "971", n: "AE" },
+        ].sort((a, b) => b.c.length - a.c.length);
+        function check() {
+            const raw = $("ph").value.trim();
+            const cleaned = raw.replace(/[\s\-().]/g, "");
+            if (!/^\+?\d{6,15}$/.test(cleaned)) {
+                $("status").innerHTML = "<span style='color:#EF4444;'>✗ Invalid — must be 6-15 digits, may start with +</span>";
+                $("parts").textContent = "";
+                return;
+            }
+            const digits = cleaned.replace(/^\+/, "");
+            const m = CC.find(c => digits.startsWith(c.c));
+            $("status").innerHTML = "<span style='color:#10B981;'>✓ Valid E.164 shape</span>";
+            $("parts").innerHTML = m
+                ? `Country code: +${m.c} (${m.n})  •  subscriber: ${digits.slice(m.c.length)}  •  E.164: +${digits}`
+                : `Unknown country code  •  E.164: +${digits}`;
+        }
+        $("ph").addEventListener("input", check);
+        check();
+
+    })();
+    </script>
+</body>
+</html>

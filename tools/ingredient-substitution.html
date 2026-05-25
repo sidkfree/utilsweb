@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Ingredient Substitution — UtilsWeb</title>
+    <meta name="description" content="Common kitchen swaps — egg, butter, buttermilk, baking powder…">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F43F5E, #F59E0B);">🔄</div>
+                    <div>
+                        <h1>Ingredient Substitution</h1>
+                        <p class="tagline">Common kitchen swaps — egg, butter, buttermilk, baking powder…</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Search ingredient</label>
+                    <input type="text" id="q" placeholder="e.g. butter, buttermilk, egg">
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;">
+                    <div id="hits"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>A built-in list of common, ratio-preserving kitchen substitutions. Texture / flavour may shift — adjust as needed.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const SUB = {
+            "egg": ["¼ cup mashed banana", "¼ cup unsweetened applesauce", "1 tbsp ground flax + 3 tbsp water", "¼ cup silken tofu (blended)"],
+            "butter (1 cup)": ["1 cup margarine", "¾ cup vegetable oil", "1 cup coconut oil (solid)"],
+            "buttermilk (1 cup)": ["1 cup milk + 1 tbsp lemon juice (let sit 5 min)", "1 cup plain yogurt", "1 cup milk + 1 tbsp white vinegar"],
+            "baking powder (1 tsp)": ["¼ tsp baking soda + ½ tsp cream of tartar", "¼ tsp baking soda + ½ cup buttermilk (reduce liquid in recipe)"],
+            "self-rising flour (1 cup)": ["1 cup AP flour + 1½ tsp baking powder + ¼ tsp salt"],
+            "brown sugar (1 cup)": ["1 cup white sugar + 1 tbsp molasses"],
+            "cornstarch (1 tbsp)": ["2 tbsp AP flour", "1 tbsp arrowroot powder"],
+            "heavy cream (1 cup)": ["¾ cup milk + ⅓ cup butter (melted)", "1 cup evaporated milk"],
+            "sour cream (1 cup)": ["1 cup plain yogurt", "1 cup buttermilk thickened with 2 tbsp flour"],
+            "wine": ["equal volume broth + 1 tbsp vinegar", "white grape juice + 1 tbsp lemon juice"],
+            "honey (1 cup)": ["1¼ cup sugar + ¼ cup extra liquid", "1 cup maple syrup"],
+            "milk (1 cup)": ["1 cup almond / soy / oat milk", "½ cup evaporated milk + ½ cup water"],
+        };
+        function paint() {
+            const q = $("q").value.toLowerCase().trim();
+            const matches = Object.entries(SUB).filter(([k]) => !q || k.includes(q));
+            if (!matches.length) { $("hits").innerHTML = `<p style='color:#9aa1b6;'>No substitution found for "${q}".</p>`; return; }
+            $("hits").innerHTML = matches.map(([k, v]) => `
+                <div style='padding:10px 0;border-top:1px solid rgba(255,255,255,.06);'>
+                    <strong style='color:#F59E0B;'>${k}</strong>
+                    <ul style='margin:6px 0 0 18px;color:#fff;'>${v.map(s => `<li>${s}</li>`).join("")}</ul>
+                </div>`).join("");
+        }
+        $("q").addEventListener("input", paint);
+        paint();
+
+    })();
+    </script>
+</body>
+</html>

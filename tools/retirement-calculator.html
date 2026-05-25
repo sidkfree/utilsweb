@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Retirement Calculator — UtilsWeb</title>
+    <meta name="description" content="Will you have enough to retire? Project savings + safe withdrawal.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #6366F1, #10B981);">🏖️</div>
+                    <div>
+                        <h1>Retirement Calculator</h1>
+                        <p class="tagline">Will you have enough to retire? Project savings + safe withdrawal.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Current age</label><input type="number" id="age" value="32"></div>
+                        <div><label>Retire at</label><input type="number" id="ret" value="65"></div>
+                        <div><label>Current savings</label><input type="number" id="cs" value="50000"></div>
+                        <div><label>Monthly contribution</label><input type="number" id="mc" value="600"></div>
+                        <div><label>Annual return %</label><input type="number" id="r" value="7" step="0.1"></div>
+                        <div><label>Withdrawal rate % (safe ~4%)</label><input type="number" id="w" value="4" step="0.1"></div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Project</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+                        <div><strong id="fv" style="font-size:24px;color:#10B981;"></strong><div>Nest egg at retirement</div></div>
+                        <div><strong id="inc" style="font-size:24px;color:#06B6D4;"></strong><div>Annual income</div></div>
+                        <div><strong id="mo" style="font-size:24px;color:#F59E0B;"></strong><div>Monthly income</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Lump-sum and monthly contributions are compounded forward; the safe-withdrawal rate (default 4%) determines sustainable retirement income.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("runBtn").addEventListener("click", () => {
+            const t = parseFloat($("ret").value) - parseFloat($("age").value);
+            const P = parseFloat($("cs").value) || 0;
+            const C = parseFloat($("mc").value) || 0;
+            const r = parseFloat($("r").value) / 100;
+            const w = parseFloat($("w").value) / 100;
+            if (t <= 0) return showError("Retirement age must be later than current age.");
+            const i = r / 12;
+            const lump = P * Math.pow(1 + r, t);
+            const annu = i === 0 ? C * 12 * t : C * ((Math.pow(1 + i, 12*t) - 1) / i);
+            const total = lump + annu;
+            const ann = total * w;
+            $("fv").textContent = "$" + Math.round(total).toLocaleString();
+            $("inc").textContent = "$" + Math.round(ann).toLocaleString();
+            $("mo").textContent = "$" + Math.round(ann / 12).toLocaleString();
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

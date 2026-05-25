@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Body Fat Calculator — UtilsWeb</title>
+    <meta name="description" content="US Navy method — estimate body-fat % from neck, waist, (hip) circumferences.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EF4444, #EC4899);">📏</div>
+                    <div>
+                        <h1>Body Fat Calculator</h1>
+                        <p class="tagline">US Navy method — estimate body-fat % from neck, waist, (hip) circumferences.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;">
+                        
+                        <div>
+                            <label>Sex</label>
+                            <select id="sex"><option value="m" selected>Male</option><option value="f">Female</option></select>
+                        </div>
+                        <div><label>Height cm</label><input type="number" id="h" value="178"></div>
+                        <div><label>Neck cm</label><input type="number" id="neck" value="38"></div>
+                        <div><label>Waist cm</label><input type="number" id="waist" value="85"></div>
+                        <div id="hipWrap"><label>Hip cm</label><input type="number" id="hip" value="95"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;text-align:center;">
+                    <div><strong id="bf" style="font-size:32px;color:#EF4444;"></strong> <span style="color:#9aa1b6;">% body fat</span></div>
+                    <div id="cat" style="color:#9aa1b6;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>US Navy circumference method — quick estimate, ±3-5% typical accuracy. Measure on bare skin.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function show() {
+            $("hipWrap").style.display = $("sex").value === "f" ? "" : "none";
+        }
+        function calc() {
+            show();
+            const h = parseFloat($("h").value), n = parseFloat($("neck").value), w = parseFloat($("waist").value), hp = parseFloat($("hip").value);
+            let bf;
+            if ($("sex").value === "m") {
+                bf = 495 / (1.0324 - 0.19077 * Math.log10(w - n) + 0.15456 * Math.log10(h)) - 450;
+            } else {
+                bf = 495 / (1.29579 - 0.35004 * Math.log10(w + hp - n) + 0.22100 * Math.log10(h)) - 450;
+            }
+            if (!isFinite(bf)) { $("bf").textContent = "—"; return; }
+            $("bf").textContent = bf.toFixed(1);
+            const m = $("sex").value === "m";
+            const cat = bf < (m?6:14)  ? "Essential fat" :
+                        bf < (m?14:21) ? "Athletes" :
+                        bf < (m?18:25) ? "Fitness" :
+                        bf < (m?25:32) ? "Average" : "Obese";
+            $("cat").textContent = cat;
+        }
+        ["sex","h","neck","waist","hip"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Mock Data Generator — UtilsWeb</title>
+    <meta name="description" content="Generate fake users — name, email, phone, address, date — as JSON or CSV.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #D946EF, #EF4444);">🧪</div>
+                    <div>
+                        <h1>Mock Data Generator</h1>
+                        <p class="tagline">Generate fake users — name, email, phone, address, date — as JSON or CSV.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>How many rows</label><input type="number" id="n" value="20" min="1" max="1000"></div>
+                        <div>
+                            <label>Format</label>
+                            <select id="fmt"><option value="json" selected>JSON</option><option value="csv">CSV</option></select>
+                        </div>
+                        <div>
+                            <label>Fields</label>
+                            <input type="text" id="cols" value="id,name,email,phone,company,city,country,birthday" style="font-family:ui-monospace,monospace;">
+                        </div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Generate</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="14" readonly style="font-family:ui-monospace,monospace;font-size:12px;"></textarea>
+                    <div style="display:flex;gap:10px;"><a class="btn primary" id="dl" download="mock-data">⬇ Download</a><button class="btn primary" id="copyBtn">⧉ Copy</button></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Built-in lists of first/last names, companies, cities. Pick the columns you want — output as JSON or CSV.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const FIRST = "Alex Sam Jordan Taylor Casey Morgan Riley Quinn Drew Avery Cameron Sage Sky Reese Hayden Skylar Phoenix Rowan Logan Parker Charlie Devon Emerson Frankie Jamie Kelly Lee Micah Nico Oakley Peyton".split(" ");
+        const LAST  = "Smith Johnson Williams Brown Jones Garcia Miller Davis Rodriguez Martinez Hernandez Lopez Gonzalez Wilson Anderson Thomas Taylor Moore Jackson Martin Lee Perez Thompson White".split(" ");
+        const COMPANY = "Acme Initech Globex Soylent Stark Hooli Vandelay Massive Pied Piper Wayne Cyberdyne Wonka Tyrell Umbrella Initrode".split(" ");
+        const CITY   = "Paris Tokyo Lagos Sao Paulo Berlin Mumbai Toronto Sydney Madrid Cairo Seoul Mexico City Rome Bangkok Lisbon Stockholm Oslo Vienna".split(" ");
+        const COUNTRY = "France Japan Nigeria Brazil Germany India Canada Australia Spain Egypt Korea Mexico Italy Thailand Portugal Sweden Norway Austria".split(" ");
+        function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+        function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        function phone() { return "+1-" + rnd(200,999) + "-" + rnd(100,999) + "-" + String(rnd(0,9999)).padStart(4,"0"); }
+        function makeRow(i) {
+            const f = pick(FIRST), l = pick(LAST), c = pick(COMPANY);
+            return {
+                id: i + 1,
+                name: `${f} ${l}`,
+                email: `${f.toLowerCase()}.${l.toLowerCase()}@${c.toLowerCase().replace(/\s+/g,"")}.com`,
+                phone: phone(),
+                company: c,
+                city: pick(CITY),
+                country: pick(COUNTRY),
+                birthday: new Date(rnd(1970, 2005), rnd(0, 11), rnd(1, 28)).toISOString().slice(0, 10),
+            };
+        }
+        $("runBtn").addEventListener("click", () => {
+            const n = Math.max(1, Math.min(1000, parseInt($("n").value, 10) || 1));
+            const cols = $("cols").value.split(",").map(s => s.trim()).filter(Boolean);
+            const rows = [...Array(n)].map((_, i) => {
+                const full = makeRow(i);
+                const o = {}; for (const c of cols) o[c] = full[c] ?? "";
+                return o;
+            });
+            let out;
+            if ($("fmt").value === "csv") {
+                out = cols.join(",") + "\n" + rows.map(r => cols.map(c => JSON.stringify(r[c] ?? "")).join(",")).join("\n");
+                $("dl").download = "mock-data.csv";
+                $("dl").href = URL.createObjectURL(new Blob([out], { type: "text/csv" }));
+            } else {
+                out = JSON.stringify(rows, null, 2);
+                $("dl").download = "mock-data.json";
+                $("dl").href = URL.createObjectURL(new Blob([out], { type: "application/json" }));
+            }
+            $("out").value = out;
+            $("resultBox").style.display = "flex";
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

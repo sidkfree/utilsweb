@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Coin Flip — UtilsWeb</title>
+    <meta name="description" content="Heads or tails — animated, cryptographically fair, with running totals.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EAB308, #22C55E);">🪙</div>
+                    <div>
+                        <h1>Coin Flip</h1>
+                        <p class="tagline">Heads or tails — animated, cryptographically fair, with running totals.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form" style="text-align:center;">
+                    <button class="btn primary" id="flipBtn" type="button" style="font-size:18px;padding:12px 32px;">🪙 Flip</button>
+                    <button class="btn primary" id="resetBtn" type="button" style="margin-left:10px;">Reset</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:14px;align-items:center;">
+                    <div id="coin" style="font-size:80px;transition:transform .6s;"></div>
+                    <div id="last" style="font-size:24px;font-weight:600;"></div>
+                    <div id="stat" style="color:#9aa1b6;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>One crypto-random bit per flip — exactly 50/50.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        let h = 0, t = 0;
+        $("flipBtn").addEventListener("click", () => {
+            const buf = new Uint32Array(1); crypto.getRandomValues(buf);
+            const isH = (buf[0] & 1) === 0;
+            if (isH) h++; else t++;
+            $("coin").textContent = isH ? "🪙" : "🪙";
+            $("coin").style.transform = `rotateY(${Math.random() < .5 ? 360 : -360}deg)`;
+            $("last").textContent = isH ? "Heads" : "Tails";
+            $("last").style.color = isH ? "#EAB308" : "#22C55E";
+            $("stat").textContent = `Heads ${h} · Tails ${t}  (${h+t} flips)`;
+            setTimeout(() => $("coin").style.transform = "", 600);
+        });
+        $("resetBtn").addEventListener("click", () => { h = 0; t = 0; $("stat").textContent = ""; $("last").textContent = ""; });
+
+    })();
+    </script>
+</body>
+</html>

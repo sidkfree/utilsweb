@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Meta Tags Generator — UtilsWeb</title>
+    <meta name="description" content="Generate <head> meta tags for SEO + social — Twitter, Open Graph.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #3B82F6, #8B5CF6);">🏷️</div>
+                    <div>
+                        <h1>Meta Tags Generator</h1>
+                        <p class="tagline">Generate <head> meta tags for SEO + social — Twitter, Open Graph.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Title</label><input type="text" id="t" value="UtilsWeb — tools that just work"></div>
+                        <div><label>URL</label><input type="url" id="u" value="https://utilsweb.com"></div>
+                        <div style="grid-column:1/-1;"><label>Description</label><textarea id="d" rows="2">100% client-side utilities — every tool runs in your browser.</textarea></div>
+                        <div><label>Image URL (1200×630)</label><input type="url" id="img" value="https://utilsweb.com/og.png"></div>
+                        <div><label>Site name</label><input type="text" id="s" value="UtilsWeb"></div>
+                        <div><label>Twitter @handle (optional)</label><input type="text" id="tw" value="@utilsweb"></div>
+                        <div>
+                            <label>Type</label>
+                            <select id="ty"><option>website</option><option>article</option><option>product</option></select>
+                        </div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Generate</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="20" readonly style="font-family:ui-monospace,monospace;font-size:12px;"></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Builds the standard SEO + Open Graph + Twitter Card meta-tag set. Paste into your <code>&lt;head&gt;</code>.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function esc(s) { return String(s).replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+        $("runBtn").addEventListener("click", () => {
+            const t = $("t").value, d = $("d").value, u = $("u").value, img = $("img").value, s = $("s").value, tw = $("tw").value, ty = $("ty").value;
+            const out = [
+                `<title>${esc(t)}</title>`,
+                `<meta name="description" content="${esc(d)}">`,
+                `<link rel="canonical" href="${esc(u)}">`,
+                "",
+                `<meta property="og:type" content="${esc(ty)}">`,
+                `<meta property="og:site_name" content="${esc(s)}">`,
+                `<meta property="og:title" content="${esc(t)}">`,
+                `<meta property="og:description" content="${esc(d)}">`,
+                `<meta property="og:url" content="${esc(u)}">`,
+                `<meta property="og:image" content="${esc(img)}">`,
+                `<meta property="og:image:width" content="1200">`,
+                `<meta property="og:image:height" content="630">`,
+                "",
+                `<meta name="twitter:card" content="summary_large_image">`,
+                tw ? `<meta name="twitter:site" content="${esc(tw)}">` : "",
+                `<meta name="twitter:title" content="${esc(t)}">`,
+                `<meta name="twitter:description" content="${esc(d)}">`,
+                `<meta name="twitter:image" content="${esc(img)}">`,
+            ].filter(Boolean).join("\n");
+            $("out").value = out;
+            $("resultBox").style.display = "flex";
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

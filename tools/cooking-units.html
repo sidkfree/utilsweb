@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Cooking Unit Converter — UtilsWeb</title>
+    <meta name="description" content="tsp ↔ tbsp ↔ cup ↔ ml ↔ g (per ingredient density).">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #84CC16, #F59E0B);">🥄</div>
+                    <div>
+                        <h1>Cooking Unit Converter</h1>
+                        <p class="tagline">tsp ↔ tbsp ↔ cup ↔ ml ↔ g (per ingredient density).</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Amount</label><input type="number" id="v" value="1" step="0.1"></div>
+                        <div>
+                            <label>From</label>
+                            <select id="from"></select>
+                        </div>
+                        <div>
+                            <label>To</label>
+                            <select id="to"></select>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:10px;">
+                        <label>Ingredient (for grams)</label>
+                        <select id="ing">
+                            <option value="1.0">Water (1 g/ml)</option>
+                            <option value="0.59">Flour (all-purpose)</option>
+                            <option value="0.85">Sugar (granulated)</option>
+                            <option value="0.91">Butter</option>
+                            <option value="0.93">Olive oil</option>
+                            <option value="1.42">Salt</option>
+                            <option value="0.69">Cocoa powder</option>
+                            <option value="0.61">Powdered sugar</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div><strong id="r" style="font-size:30px;color:#84CC16;"></strong></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Volumes use US conventions (tsp 4.93 ml, tbsp 14.79 ml, cup 240 ml). Grams use the picked ingredient's density.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const ML = { tsp: 4.929, tbsp: 14.787, "fl oz": 29.574, cup: 240, ml: 1, L: 1000, "pt (US)": 473.176, "qt (US)": 946.353 };
+        function pop() {
+            const opts = [...Object.keys(ML), "g (needs density)"].map(u => `<option>${u}</option>`).join("");
+            $("from").innerHTML = opts; $("to").innerHTML = opts;
+            $("from").value = "cup"; $("to").value = "ml";
+        }
+        function calc() {
+            const v = parseFloat($("v").value) || 0;
+            const f = $("from").value, t = $("to").value;
+            const dens = parseFloat($("ing").value);
+            let ml;
+            if (f === "g (needs density)") ml = v / dens;
+            else ml = v * ML[f];
+            let out;
+            if (t === "g (needs density)") out = ml * dens;
+            else out = ml / ML[t];
+            $("r").textContent = `${out.toFixed(2)} ${t}`;
+        }
+        pop();
+        ["v","from","to","ing"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

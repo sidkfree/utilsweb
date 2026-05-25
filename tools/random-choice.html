@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Random Choice / Picker — UtilsWeb</title>
+    <meta name="description" content="Paste a list, pick N at random — perfect for giveaways and decisions.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F43F5E, #EF4444);">🎰</div>
+                    <div>
+                        <h1>Random Choice / Picker</h1>
+                        <p class="tagline">Paste a list, pick N at random — perfect for giveaways and decisions.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Choices (one per line)</label>
+                    <textarea id="inp" rows="10" placeholder="alice\nbob\ncarol"></textarea>
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;">
+                        <div><label>Pick how many</label><input type="number" id="k" value="1" min="1"></div>
+                        <div style="display:flex;align-items:flex-end;"><label style='display:flex;gap:6px;align-items:center;'><input type='checkbox' id='uniq' checked> Without replacement</label></div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Pick</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="6" readonly style="font-family:ui-monospace,monospace;font-size:16px;"></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Without-replacement uses Fisher-Yates shuffle. With-replacement uses one crypto-random index per draw.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("runBtn").addEventListener("click", () => {
+            clearError();
+            const items = $("inp").value.split("\n").map(s => s.trim()).filter(Boolean);
+            if (!items.length) return showError("Add some choices first.");
+            const k = Math.max(1, parseInt($("k").value, 10) || 1);
+            const out = [];
+            if ($("uniq").checked) {
+                if (k > items.length) return showError("Need ≥ k choices for without-replacement.");
+                const pool = items.slice();
+                for (let i = pool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [pool[i], pool[j]] = [pool[j], pool[i]];
+                }
+                out.push(...pool.slice(0, k));
+            } else {
+                const buf = new Uint32Array(k); crypto.getRandomValues(buf);
+                for (let i = 0; i < k; i++) out.push(items[buf[i] % items.length]);
+            }
+            $("out").value = out.join("\n");
+            $("resultBox").style.display = "flex";
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

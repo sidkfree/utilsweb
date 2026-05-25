@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Recipe Scaler — UtilsWeb</title>
+    <meta name="description" content="Scale a recipe up or down by serving count, preserving every ingredient ratio.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F97316, #EF4444);">🍲</div>
+                    <div>
+                        <h1>Recipe Scaler</h1>
+                        <p class="tagline">Scale a recipe up or down by serving count, preserving every ingredient ratio.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Original servings</label><input type="number" id="o" value="4" min="1"></div>
+                        <div><label>Desired servings</label><input type="number" id="d" value="6" min="1"></div>
+                    </div>
+                    <label style="margin-top:10px;">Ingredients (one per line — start with the quantity)</label>
+                    <textarea id="inp" rows="10" placeholder="2 cups flour\n1.5 tbsp olive oil\n300 g sugar\n3 eggs">2 cups flour
+1.5 tbsp olive oil
+300 g sugar
+3 eggs
+0.5 tsp salt</textarea>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="10" readonly></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Multiplies the leading quantity on each line by (desired/original). Recognises fractions (1/2, 1 1/4) and commas.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function fmt(n) {
+            const r = Math.round(n * 100) / 100;
+            // friendly fractions for common quarters/halves/thirds
+            const map = [[0.125,"⅛"],[0.25,"¼"],[0.333,"⅓"],[0.5,"½"],[0.667,"⅔"],[0.75,"¾"]];
+            const whole = Math.floor(r);
+            const frac = r - whole;
+            const m = map.find(([f]) => Math.abs(f - frac) < 0.02);
+            if (m) return (whole ? whole + " " : "") + m[1];
+            return r.toString();
+        }
+        function scale() {
+            const o = parseFloat($("o").value) || 1;
+            const d = parseFloat($("d").value) || 1;
+            const ratio = d / o;
+            const out = $("inp").value.split("\n").map(line => {
+                const m = line.match(/^(\s*)([0-9]+(?:[.,/][0-9]+)?(?:\s+[0-9]+\/[0-9]+)?)\s*(.+)$/);
+                if (!m) return line;
+                let num;
+                if (m[2].includes("/")) {
+                    const [w, frac] = m[2].split(/\s+/);
+                    if (frac && frac.includes("/")) { const [a, b] = frac.split("/").map(Number); num = parseFloat(w) + a / b; }
+                    else { const [a, b] = m[2].split("/").map(Number); num = a / b; }
+                } else num = parseFloat(m[2].replace(",", "."));
+                return m[1] + fmt(num * ratio) + " " + m[3];
+            }).join("\n");
+            $("out").value = out;
+        }
+        ["o","d","inp"].forEach(id => $(id).addEventListener("input", scale));
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+        scale();
+
+    })();
+    </script>
+</body>
+</html>

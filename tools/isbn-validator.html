@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>ISBN Validator — UtilsWeb</title>
+    <meta name="description" content="Check ISBN-10 and ISBN-13 checksums; convert between them.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #EC4899);">📚</div>
+                    <div>
+                        <h1>ISBN Validator</h1>
+                        <p class="tagline">Check ISBN-10 and ISBN-13 checksums; convert between them.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>ISBN</label>
+                    <input type="text" id="isbn" value="978-3-16-148410-0" style="font-family:ui-monospace,monospace;">
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:8px;">
+                    <div id="status" style="font-size:18px;"></div>
+                    <div id="convert" style="color:#9aa1b6;font-size:13px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Standard weighted-sum checksums per ISO 2108. Convert ISBN-10 ↔ 13 with the 978 prefix.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function clean(s) { return s.replace(/[-\s]/g, "").toUpperCase(); }
+        function checkIsbn10(s) {
+            if (!/^\d{9}[\dX]$/.test(s)) return false;
+            let sum = 0;
+            for (let i = 0; i < 10; i++) sum += (s[i] === "X" ? 10 : parseInt(s[i], 10)) * (10 - i);
+            return sum % 11 === 0;
+        }
+        function checkIsbn13(s) {
+            if (!/^\d{13}$/.test(s)) return false;
+            let sum = 0;
+            for (let i = 0; i < 13; i++) sum += parseInt(s[i], 10) * (i % 2 ? 3 : 1);
+            return sum % 10 === 0;
+        }
+        function to13(s) {
+            const core = "978" + s.slice(0, 9);
+            let sum = 0;
+            for (let i = 0; i < 12; i++) sum += parseInt(core[i], 10) * (i % 2 ? 3 : 1);
+            const c = (10 - sum % 10) % 10;
+            return core + c;
+        }
+        function to10(s) {
+            if (!s.startsWith("978")) return null;
+            const core = s.slice(3, 12);
+            let sum = 0;
+            for (let i = 0; i < 9; i++) sum += parseInt(core[i], 10) * (10 - i);
+            const c = (11 - sum % 11) % 11;
+            return core + (c === 10 ? "X" : c);
+        }
+        function check() {
+            const v = clean($("isbn").value);
+            if (!v) { $("status").textContent = ""; $("convert").textContent = ""; return; }
+            if (v.length === 10 && checkIsbn10(v)) {
+                $("status").innerHTML = "<span style='color:#10B981;'>✓ Valid ISBN-10</span>";
+                $("convert").textContent = "→ ISBN-13: " + to13(v);
+            } else if (v.length === 13 && checkIsbn13(v)) {
+                $("status").innerHTML = "<span style='color:#10B981;'>✓ Valid ISBN-13</span>";
+                const t10 = to10(v);
+                $("convert").textContent = t10 ? "→ ISBN-10: " + t10 : "(no ISBN-10 — prefix isn't 978)";
+            } else {
+                $("status").innerHTML = "<span style='color:#EF4444;'>✗ Invalid ISBN</span>";
+                $("convert").textContent = "";
+            }
+        }
+        $("isbn").addEventListener("input", check);
+        check();
+
+    })();
+    </script>
+</body>
+</html>

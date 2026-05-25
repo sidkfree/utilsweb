@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Lumber Board-Foot Calculator — UtilsWeb</title>
+    <meta name="description" content="Board-feet, total volume, and cost for any lumber list.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #F97316);">🪵</div>
+                    <div>
+                        <h1>Lumber Board-Foot Calculator</h1>
+                        <p class="tagline">Board-feet, total volume, and cost for any lumber list.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;">
+                        <div><label>Thickness (in)</label><input type="number" id="t" value="1" step="0.25"></div>
+                        <div><label>Width (in)</label><input type="number" id="w" value="6" step="0.25"></div>
+                        <div><label>Length (ft)</label><input type="number" id="l" value="8" step="0.5"></div>
+                        <div><label>Quantity</label><input type="number" id="q" value="10"></div>
+                        <div><label>Price per board-foot ($)</label><input type="number" id="p" value="4.5" step="0.01"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+                        <div><strong id="bf" style="font-size:24px;color:#F59E0B;"></strong><div>Board-feet (each)</div></div>
+                        <div><strong id="tot" style="font-size:24px;color:#10B981;"></strong><div>Total BF</div></div>
+                        <div><strong id="cost" style="font-size:24px;color:#06B6D4;"></strong><div>Total cost</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Board-feet = thickness(in) × width(in) × length(ft) ÷ 12. The lumber industry's standard volume unit.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const t = +$("t").value, w = +$("w").value, l = +$("l").value, q = +$("q").value, p = +$("p").value;
+            const bf = t * w * l / 12;
+            const tot = bf * q;
+            $("bf").textContent = bf.toFixed(2);
+            $("tot").textContent = tot.toFixed(2);
+            $("cost").textContent = "$" + (tot * p).toFixed(2);
+        }
+        ["t","w","l","q","p"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Concrete Calculator — UtilsWeb</title>
+    <meta name="description" content="How many cubic metres / bags of concrete for slabs, footings, columns.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #78716C, #F97316);">🧱</div>
+                    <div>
+                        <h1>Concrete Calculator</h1>
+                        <p class="tagline">How many cubic metres / bags of concrete for slabs, footings, columns.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;">
+                        <div>
+                            <label>Shape</label>
+                            <select id="s"><option value="slab">Rectangular slab</option><option value="col">Round column</option></select>
+                        </div>
+                        <div><label>Length (m)</label><input type="number" id="l" value="3" step="0.01"></div>
+                        <div><label>Width / Ø (m)</label><input type="number" id="w" value="2" step="0.01"></div>
+                        <div><label>Depth (m)</label><input type="number" id="d" value="0.1" step="0.01"></div>
+                    </div>
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;">
+                        <div><label>Bag size (kg)</label><input type="number" id="bag" value="40"></div>
+                        <div><label>Bag yield (m³ per kg, typical 0.0005)</label><input type="number" id="y" value="0.0005" step="0.0001"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><strong id="vol" style="font-size:24px;color:#78716C;"></strong><div>Volume</div></div>
+                        <div><strong id="bags" style="font-size:24px;color:#F97316;"></strong><div>Bags (+10% waste)</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Volume = L × W × D (slab) or π(D/2)² × H (column). Bags add 10% waste/spill.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const s = $("s").value;
+            const l = +$("l").value, w = +$("w").value, d = +$("d").value;
+            const vol = s === "slab" ? l * w * d : Math.PI * (w/2) ** 2 * d;
+            const perBag = +$("bag").value * +$("y").value;
+            const bags = perBag > 0 ? Math.ceil(vol / perBag * 1.10) : 0;
+            $("vol").textContent = vol.toFixed(3) + " m³";
+            $("bags").textContent = bags;
+        }
+        ["s","l","w","d","bag","y"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

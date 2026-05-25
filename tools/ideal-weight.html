@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Ideal Weight Calculator — UtilsWeb</title>
+    <meta name="description" content="Four classic formulas: Devine, Robinson, Miller, Hamwi.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #3B82F6, #06B6D4);">🎯</div>
+                    <div>
+                        <h1>Ideal Weight Calculator</h1>
+                        <p class="tagline">Four classic formulas: Devine, Robinson, Miller, Hamwi.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;">
+                        
+                        <div>
+                            <label>Sex</label>
+                            <select id="sex"><option value="m" selected>Male</option><option value="f">Female</option></select>
+                        </div>
+                        <div><label>Height cm</label><input type="number" id="h" value="178"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;">
+                    <table style="width:100%;font-size:14px;">
+                        <tbody id="rows"></tbody>
+                    </table>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>All four take a base weight at 5 ft and add a per-inch increment. Use them as rough targets, not gospel.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const h = parseFloat($("h").value);
+            const inches = h / 2.54;
+            const over = inches - 60;
+            const isM = $("sex").value === "m";
+            const formulas = {
+                "Devine":   isM ? 50   + 2.3   * over : 45.5 + 2.3   * over,
+                "Robinson": isM ? 52   + 1.9   * over : 49   + 1.7   * over,
+                "Miller":   isM ? 56.2 + 1.41  * over : 53.1 + 1.36  * over,
+                "Hamwi":    isM ? 48   + 2.7   * over : 45.5 + 2.2   * over,
+            };
+            $("rows").innerHTML = Object.entries(formulas).map(([k, v]) =>
+                `<tr><td style='color:#9aa1b6;padding:6px;'>${k}</td><td style='text-align:right;color:#10B981;font-weight:600;padding:6px;'>${v.toFixed(1)} kg</td></tr>`
+            ).join("");
+        }
+        ["sex","h"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>

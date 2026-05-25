@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Credit Card Validator — UtilsWeb</title>
+    <meta name="description" content="Luhn check + card brand detection (Visa, MC, Amex, Discover, JCB, Diners…).">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #10B981, #3B82F6);">💳</div>
+                    <div>
+                        <h1>Credit Card Validator</h1>
+                        <p class="tagline">Luhn check + card brand detection (Visa, MC, Amex, Discover, JCB, Diners…).</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Card number</label>
+                    <input type="text" id="cc" value="4242 4242 4242 4242" style="font-family:ui-monospace,monospace;letter-spacing:2px;">
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;">
+                    <div id="brand" style="font-size:20px;"></div>
+                    <div id="luhn" style="font-size:14px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>The Luhn (mod-10) algorithm catches single-digit typos and most transpositions. Brand detection uses BIN-range regexes.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function luhn(n) {
+            let sum = 0, alt = false;
+            for (let i = n.length - 1; i >= 0; i--) {
+                let d = parseInt(n[i], 10);
+                if (alt) { d *= 2; if (d > 9) d -= 9; }
+                sum += d; alt = !alt;
+            }
+            return sum % 10 === 0;
+        }
+        const RULES = [
+            { brand: "Visa",       re: /^4\d{12}(\d{3})?(\d{3})?$/,             icon: "💳" },
+            { brand: "Mastercard", re: /^(5[1-5]|2[2-7])\d{14}$/,                 icon: "💳" },
+            { brand: "Amex",       re: /^3[47]\d{13}$/,                           icon: "💳" },
+            { brand: "Discover",   re: /^6(011|5\d{2}|4[4-9]\d|22(1\d{2}|[2-8]\d{3}|9([01]\d|2[0-5])))\d{10,12}$/, icon: "💳" },
+            { brand: "JCB",        re: /^(?:2131|1800|35\d{3})\d{11}$/,         icon: "💳" },
+            { brand: "Diners",     re: /^3(?:0[0-5]|[68]\d)\d{11}$/,            icon: "💳" },
+            { brand: "UnionPay",   re: /^(62|81)\d{14,17}$/,                      icon: "💳" },
+        ];
+        function check() {
+            const n = $("cc").value.replace(/\D/g, "");
+            if (!n) { $("brand").textContent = ""; $("luhn").textContent = ""; return; }
+            const m = RULES.find(r => r.re.test(n));
+            $("brand").innerHTML = m ? `${m.icon} <strong>${m.brand}</strong>` : `<span style="color:#9aa1b6;">Unknown brand</span>`;
+            const ok = luhn(n);
+            $("luhn").innerHTML = ok ? `<span style="color:#10B981;">✓ Passes Luhn checksum</span>` : `<span style="color:#EF4444;">✗ Fails Luhn checksum</span>`;
+        }
+        $("cc").addEventListener("input", check);
+        check();
+
+    })();
+    </script>
+</body>
+</html>

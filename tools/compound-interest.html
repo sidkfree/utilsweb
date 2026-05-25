@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Compound Interest Calculator — UtilsWeb</title>
+    <meta name="description" content="See your money grow — including regular contributions and any compounding frequency.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #059669, #06B6D4);">📈</div>
+                    <div>
+                        <h1>Compound Interest Calculator</h1>
+                        <p class="tagline">See your money grow — including regular contributions and any compounding frequency.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Initial</label><input type="number" id="p" value="10000"></div>
+                        <div><label>Monthly contribution</label><input type="number" id="c" value="500"></div>
+                        <div><label>Annual rate %</label><input type="number" id="r" value="7" step="0.01"></div>
+                        <div><label>Years</label><input type="number" id="t" value="20"></div>
+                        <div>
+                            <label>Compounded</label>
+                            <select id="freq"><option value="12" selected>Monthly</option><option value="4">Quarterly</option><option value="1">Annually</option><option value="365">Daily</option></select>
+                        </div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Calculate</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+                        <div><strong id="fv" style="font-size:26px;color:#10B981;"></strong><div>Future value</div></div>
+                        <div><strong id="cont" style="font-size:22px;color:#06B6D4;"></strong><div>Total contributed</div></div>
+                        <div><strong id="earn" style="font-size:22px;color:#F59E0B;"></strong><div>Interest earned</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Future value = lump-sum compounding + future value of an annuity. All math is local.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function fmt(n) { return "$" + Math.round(n).toLocaleString(); }
+        $("runBtn").addEventListener("click", () => {
+            const P = parseFloat($("p").value) || 0;
+            const C = parseFloat($("c").value) || 0;
+            const r = parseFloat($("r").value) / 100;
+            const t = parseFloat($("t").value);
+            const n = parseFloat($("freq").value);
+            if (!(t > 0)) return showError("Time must be > 0.");
+            const fvLump = P * Math.pow(1 + r/n, n*t);
+            // Monthly contributions, regardless of compound freq, approximated via 12 per year
+            const k = 12;
+            const i = Math.pow(1 + r/n, n/k) - 1;
+            const fvCont = i === 0 ? C * k * t : C * ((Math.pow(1 + i, k*t) - 1) / i);
+            const total = fvLump + fvCont;
+            const contributed = P + C * 12 * t;
+            $("fv").textContent = fmt(total);
+            $("cont").textContent = fmt(contributed);
+            $("earn").textContent = fmt(total - contributed);
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

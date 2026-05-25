@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Wei ⇄ Gwei ⇄ Ether — UtilsWeb</title>
+    <meta name="description" content="Convert between Ethereum's smallest and largest denominations.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #F97316);">Ξ</div>
+                    <div>
+                        <h1>Wei ⇄ Gwei ⇄ Ether</h1>
+                        <p class="tagline">Convert between Ethereum's smallest and largest denominations.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Wei (10⁰)</label><input type="text" id="wei" value="1000000000000000000" style="font-family:ui-monospace,monospace;"></div>
+                        <div><label>Gwei (10⁹)</label><input type="text" id="gwei" style="font-family:ui-monospace,monospace;"></div>
+                        <div><label>Ether (10¹⁸)</label><input type="text" id="eth" style="font-family:ui-monospace,monospace;"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;"></div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>1 Ether = 10⁹ Gwei = 10¹⁸ Wei. Uses BigInt for full Wei precision.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        let inside = false;
+        function setAll(weiStr) {
+            try {
+                const wei = BigInt(weiStr);
+                inside = true;
+                $("wei").value = wei.toString();
+                const gwei = Number(wei) / 1e9;
+                const eth  = Number(wei) / 1e18;
+                $("gwei").value = gwei.toLocaleString("en-US", { maximumFractionDigits: 18, useGrouping: false });
+                $("eth").value  = eth.toLocaleString("en-US", { maximumFractionDigits: 18, useGrouping: false });
+                inside = false;
+            } catch { /* ignore */ }
+        }
+        function fromGwei() {
+            if (inside) return;
+            const g = parseFloat($("gwei").value);
+            if (isNaN(g)) return;
+            try { setAll(BigInt(Math.round(g * 1e9)).toString()); } catch {}
+        }
+        function fromEth() {
+            if (inside) return;
+            const e = parseFloat($("eth").value);
+            if (isNaN(e)) return;
+            const whole = BigInt(Math.floor(e)) * (10n ** 18n);
+            const frac = BigInt(Math.round((e - Math.floor(e)) * 1e9)) * (10n ** 9n);
+            setAll((whole + frac).toString());
+        }
+        $("wei").addEventListener("input", () => setAll($("wei").value));
+        $("gwei").addEventListener("input", fromGwei);
+        $("eth").addEventListener("input", fromEth);
+        setAll($("wei").value);
+
+    })();
+    </script>
+</body>
+</html>

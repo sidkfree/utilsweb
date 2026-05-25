@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Room Area & Volume — UtilsWeb</title>
+    <meta name="description" content="Area (sq m / sq ft) and volume of a room — for paint, HVAC, flooring.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #6366F1, #F59E0B);">📐</div>
+                    <div>
+                        <h1>Room Area & Volume</h1>
+                        <p class="tagline">Area (sq m / sq ft) and volume of a room — for paint, HVAC, flooring.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div><label>Length (m)</label><input type="number" id="l" value="5" step="0.01"></div>
+                        <div><label>Width (m)</label><input type="number" id="w" value="4" step="0.01"></div>
+                        <div><label>Height (m)</label><input type="number" id="h" value="2.5" step="0.01"></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;text-align:center;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;">
+                        <div><strong id="area" style="font-size:22px;color:#06B6D4;"></strong><div>Floor area</div></div>
+                        <div><strong id="ft" style="font-size:22px;color:#A855F7;"></strong><div>Floor area (ft²)</div></div>
+                        <div><strong id="wall" style="font-size:22px;color:#F59E0B;"></strong><div>Wall area</div></div>
+                        <div><strong id="vol" style="font-size:22px;color:#10B981;"></strong><div>Volume</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+<p>Floor = L × W. Walls = 2 × (L+W) × H. Volume = L × W × H. 1 m² = 10.764 ft².</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function calc() {
+            const l = +$("l").value, w = +$("w").value, h = +$("h").value;
+            const area = l * w;
+            const wall = 2 * (l + w) * h;
+            const vol = l * w * h;
+            $("area").textContent = area.toFixed(2) + " m²";
+            $("ft").textContent = (area * 10.764).toFixed(1);
+            $("wall").textContent = wall.toFixed(2) + " m²";
+            $("vol").textContent = vol.toFixed(2) + " m³";
+        }
+        ["l","w","h"].forEach(id => $(id).addEventListener("input", calc));
+        calc();
+
+    })();
+    </script>
+</body>
+</html>
