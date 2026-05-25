@@ -1,0 +1,12 @@
+/* TEAM */
+Maintainer: Sidk Youssef
+Site: https://utilsweb.com
+Contact: sidkfree [at] gmail.com
+
+/* SITE */
+Last update: 2026/05/25
+Standards: HTML5, CSS3, ES2022, WebCrypto, WebAssembly
+Components: pdf-lib, pdf.js, ffmpeg.wasm, marked, DOMPurify,
+            Compressor.js, qrcodejs, Tesseract.js, Transformers.js,
+            TensorFlow.js, JSZip, turndown, js-yaml, bip39
+Philosophy: 100% client-side. Nothing leaves your browser.
