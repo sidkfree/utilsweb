@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Image Format Converter — UtilsWeb</title>
+    <meta name="description" content="Convert between JPG, PNG, WebP — set quality for lossy formats.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F97316, #EC4899);">🔁</div>
+                    <div>
+                        <h1>Image Format Converter</h1>
+                        <p class="tagline">Convert between JPG, PNG, WebP — set quality for lossy formats.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Image</label>
+                    <input type="file" id="file" accept="image/*">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;">
+                        <div>
+                            <label>Output format</label>
+                            <select id="fmt">
+                                <option value="image/png">PNG</option>
+                                <option value="image/jpeg" selected>JPEG</option>
+                                <option value="image/webp">WebP</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Quality: <span id="qLbl">90</span>%</label>
+                            <input type="range" id="q" min="40" max="100" value="90" style="width:100%;">
+                        </div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;" disabled>Convert</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;align-items:center;">
+                    <img id="prev" style="max-width:100%;border-radius:8px;">
+                    <div id="info" style="color:#9aa1b6;font-size:13px;"></div>
+                    <a class="btn primary" id="dl" download="image.jpg">⬇ Download</a>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Drawn to a canvas and re-encoded with <code>canvas.toBlob</code>. PNG is always lossless; JPEG and WebP respect the quality slider.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        let img = null;
+        $("file").addEventListener("change", () => {
+            const f = $("file").files[0]; if (!f) return;
+            const r = new FileReader();
+            r.onload = () => { img = new Image(); img.onload = () => $("runBtn").disabled = false; img.src = r.result; };
+            r.readAsDataURL(f);
+        });
+        $("q").addEventListener("input", () => $("qLbl").textContent = $("q").value);
+        $("runBtn").addEventListener("click", () => {
+            if (!img) return;
+            const c = document.createElement("canvas");
+            c.width = img.naturalWidth; c.height = img.naturalHeight;
+            c.getContext("2d").drawImage(img, 0, 0);
+            const fmt = $("fmt").value;
+            c.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                $("prev").src = url; $("dl").href = url;
+                $("dl").download = "image." + (fmt === "image/png" ? "png" : fmt === "image/webp" ? "webp" : "jpg");
+                $("info").textContent = `${(blob.size / 1024).toFixed(1)} KB · ${fmt}`;
+                $("resultBox").style.display = "flex";
+            }, fmt, parseInt($("q").value, 10) / 100);
+        });
+
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Audio Converter — UtilsWeb</title>
+    <meta name="description" content="Convert between MP3, WAV, OGG, M4A, FLAC.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #D946EF, #3B82F6);">🎶</div>
+                    <div>
+                        <h1>Audio Converter</h1>
+                        <p class="tagline">Convert between MP3, WAV, OGG, M4A, FLAC.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Audio file</label>
+                    <input type="file" id="file" accept="audio/*">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;">
+                        <div>
+                            <label>Output format</label>
+                            <select id="fmt">
+                                <option value="mp3" selected>MP3</option>
+                                <option value="wav">WAV</option>
+                                <option value="ogg">OGG</option>
+                                <option value="m4a">M4A (AAC)</option>
+                                <option value="flac">FLAC</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Bitrate (lossy only)</label>
+                            <select id="br">
+                                <option>96k</option>
+                                <option>128k</option>
+                                <option selected>192k</option>
+                                <option>256k</option>
+                                <option>320k</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Convert</button>
+                    <div id="progress" style="margin-top:8px;color:#9aa1b6;font-size:13px;"></div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;align-items:center;">
+                    <audio id="player" controls style="width:100%;"></audio>
+                    <a class="btn primary" id="dl" download="audio">⬇ Download</a>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>FFmpeg (WebAssembly) reads any browser-supported audio container and re-encodes to your target codec. WAV / FLAC are lossless; the bitrate slider only applies to lossy formats.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        let ffmpeg = null;
+        async function loadFfmpeg() {
+            if (ffmpeg) return ffmpeg;
+            if (typeof FFmpeg === "undefined") throw new Error("FFmpeg lib not loaded");
+            ffmpeg = FFmpeg.createFFmpeg({
+                log: false,
+                corePath: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js"
+            });
+            await ffmpeg.load();
+            return ffmpeg;
+        }
+
+        $("runBtn").addEventListener("click", async () => {
+            clearError();
+            const f = $("file").files[0]; if (!f) return showError("Pick an audio file.");
+            try {
+                $("progress").textContent = "Loading FFmpeg...";
+                const ff = await loadFfmpeg();
+                ff.setProgress(({ ratio }) => { if (ratio > 0) $("progress").textContent = `Encoding... ${(ratio * 100).toFixed(0)}%`; });
+                const data = new Uint8Array(await f.arrayBuffer());
+                const inExt = (f.name.match(/\.([a-z0-9]+)$/i) || [,"bin"])[1].toLowerCase();
+                ff.FS("writeFile", "in." + inExt, data);
+                const fmt = $("fmt").value;
+                const args = ["-i", "in." + inExt];
+                if (fmt !== "wav" && fmt !== "flac") args.push("-b:a", $("br").value);
+                args.push("out." + fmt);
+                await ff.run(...args);
+                const out = ff.FS("readFile", "out." + fmt);
+                const mime = { mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", m4a: "audio/mp4", flac: "audio/flac" }[fmt];
+                const blob = new Blob([out.buffer], { type: mime });
+                const url = URL.createObjectURL(blob);
+                $("player").src = url; $("dl").href = url;
+                $("dl").download = f.name.replace(/\.[^.]+$/, "") + "." + fmt;
+                $("progress").textContent = "Done.";
+                $("resultBox").style.display = "flex";
+            } catch (e) { showError(e.message || String(e)); }
+        });
+
+    })();
+    </script>
+</body>
+</html>

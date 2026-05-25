@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>CSS Box-Shadow Generator — UtilsWeb</title>
+    <meta name="description" content="Tune offset, blur, spread, color — copy the CSS shadow string.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #0EA5E9, #A855F7);">🪟</div>
+                    <div>
+                        <h1>CSS Box-Shadow Generator</h1>
+                        <p class="tagline">Tune offset, blur, spread, color — copy the CSS shadow string.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;">
+                        <div><label>X (px)</label><input type="number" id="x" value="0"></div>
+                        <div><label>Y (px)</label><input type="number" id="y" value="10"></div>
+                        <div><label>Blur (px)</label><input type="number" id="b" value="30" min="0"></div>
+                        <div><label>Spread (px)</label><input type="number" id="s" value="0"></div>
+                    </div>
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 120px;gap:14px;margin-top:14px;align-items:end;">
+                        <div>
+                            <label>Color</label>
+                            <input type="color" id="c" value="#06B6D4">
+                        </div>
+                        <div>
+                            <label>Opacity: <span id="oLbl">40</span>%</label>
+                            <input type="range" id="o" min="0" max="100" value="40" style="width:100%;">
+                        </div>
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="inset"> Inset</label>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:18px;align-items:center;">
+                    <div style="width:100%;height:240px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;display:flex;align-items:center;justify-content:center;">
+                        <div id="box" style="width:140px;height:140px;background:#131830;border-radius:14px;"></div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:stretch;width:100%;">
+                        <input type="text" id="css" readonly style="flex:1;font-family:ui-monospace,monospace;">
+                        <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>The same CSS you copy is applied to the preview box — what you see is exactly what you'll get.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function hexToRgba(h, alpha) {
+            h = h.replace("#", "");
+            const n = parseInt(h, 16);
+            const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+        function paint() {
+            const a = parseInt($("o").value, 10) / 100;
+            $("oLbl").textContent = $("o").value;
+            const sh = `${$("inset").checked ? "inset " : ""}${$("x").value}px ${$("y").value}px ${$("b").value}px ${$("s").value}px ${hexToRgba($("c").value, a)}`;
+            $("box").style.boxShadow = sh;
+            $("css").value = `box-shadow: ${sh};`;
+        }
+        ["x","y","b","s","c","o","inset"].forEach(id => $(id).addEventListener("input", paint));
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("css").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+        paint();
+
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Color Converter — UtilsWeb</title>
+    <meta name="description" content="Convert between HEX, RGB, HSL, HSV, CMYK. Live preview.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #8B5CF6, #EC4899);">🎨</div>
+                    <div>
+                        <h1>Color Converter</h1>
+                        <p class="tagline">Convert between HEX, RGB, HSL, HSV, CMYK. Live preview.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:end;">
+                        <div>
+                            <label>Picker</label>
+                            <input type="color" id="picker" value="#06B6D4" style="width:100%;height:48px;">
+                        </div>
+                        <div>
+                            <label>HEX</label>
+                            <input type="text" id="hex" value="#06B6D4" style="font-family:ui-monospace,monospace;">
+                        </div>
+                    </div>
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
+                        <div><label>RGB</label><input type="text" id="rgb" style="font-family:ui-monospace,monospace;" readonly></div>
+                        <div><label>HSL</label><input type="text" id="hsl" style="font-family:ui-monospace,monospace;" readonly></div>
+                        <div><label>HSV</label><input type="text" id="hsv" style="font-family:ui-monospace,monospace;" readonly></div>
+                        <div><label>CMYK</label><input type="text" id="cmyk" style="font-family:ui-monospace,monospace;" readonly></div>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;align-items:center;">
+                    <div id="swatch" style="width:100%;height:140px;border-radius:12px;border:1px solid rgba(255,255,255,.08);"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>All conversions are standard formulas — no library needed. CMYK is the simple no-profile conversion (not ICC-calibrated).</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function hexToRgb(h) {
+            h = h.replace("#", "");
+            if (h.length === 3) h = h.split("").map(c => c + c).join("");
+            const n = parseInt(h, 16);
+            return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+        }
+        function rgbToHsl({r, g, b}) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h = 0, s = 0; const l = (max + min) / 2;
+            if (max !== min) {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+                else if (max === g) h = (b - r) / d + 2;
+                else h = (r - g) / d + 4;
+                h *= 60;
+            }
+            return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
+        }
+        function rgbToHsv({r, g, b}) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+            let h = 0; const v = max, s = max ? d / max : 0;
+            if (d) {
+                if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+                else if (max === g) h = (b - r) / d + 2;
+                else h = (r - g) / d + 4;
+                h *= 60;
+            }
+            return { h: Math.round(h), s: Math.round(s * 100), v: Math.round(v * 100) };
+        }
+        function rgbToCmyk({r, g, b}) {
+            const rr = r / 255, gg = g / 255, bb = b / 255;
+            const k = 1 - Math.max(rr, gg, bb);
+            if (k === 1) return { c: 0, m: 0, y: 0, k: 100 };
+            return {
+                c: Math.round(((1 - rr - k) / (1 - k)) * 100),
+                m: Math.round(((1 - gg - k) / (1 - k)) * 100),
+                y: Math.round(((1 - bb - k) / (1 - k)) * 100),
+                k: Math.round(k * 100),
+            };
+        }
+        function update(hex) {
+            if (!/^#?[0-9a-f]{3}([0-9a-f]{3})?$/i.test(hex)) return;
+            const h = hex.startsWith("#") ? hex : "#" + hex;
+            const rgb = hexToRgb(h);
+            const hsl = rgbToHsl(rgb);
+            const hsv = rgbToHsv(rgb);
+            const cmyk = rgbToCmyk(rgb);
+            $("rgb").value  = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+            $("hsl").value  = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+            $("hsv").value  = `hsv(${hsv.h}, ${hsv.s}%, ${hsv.v}%)`;
+            $("cmyk").value = `cmyk(${cmyk.c}%, ${cmyk.m}%, ${cmyk.y}%, ${cmyk.k}%)`;
+            $("swatch").style.background = h;
+            $("picker").value = h.length === 7 ? h : h;
+        }
+        $("picker").addEventListener("input", () => { $("hex").value = $("picker").value; update($("picker").value); });
+        $("hex").addEventListener("input", () => update($("hex").value));
+        update("#06B6D4");
+
+    })();
+    </script>
+</body>
+</html>

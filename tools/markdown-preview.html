@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Markdown Preview — UtilsWeb</title>
+    <meta name="description" content="Live Markdown editor with side-by-side rendered HTML preview.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #6366F1, #06B6D4);">📝</div>
+                    <div>
+                        <h1>Markdown Preview</h1>
+                        <p class="tagline">Live Markdown editor with side-by-side rendered HTML preview.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div>
+                            <label>Markdown</label>
+                            <textarea id="md" rows="20" placeholder="# Hello\n\nType **markdown** here."># Hello
+
+Type **markdown** here.
+
+- One
+- Two
+- Three
+
+```js
+const x = 42;
+```</textarea>
+                        </div>
+                        <div>
+                            <label>Preview</label>
+                            <div id="preview" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:18px;min-height:300px;line-height:1.6;"></div>
+                        </div>
+                    </div>
+                    <div class="row" style="display:flex;gap:10px;margin-top:14px;">
+                        <button class="btn primary" id="copyHtml" type="button">⧉ Copy HTML</button>
+                        <a class="btn primary" id="dlHtml" download="document.html">⬇ Download HTML</a>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Markdown is parsed by <a href="https://marked.js.org" target="_blank" rel="noopener">marked</a> and sanitised by <a href="https://github.com/cure53/DOMPurify" target="_blank" rel="noopener">DOMPurify</a> before being inserted — so even pasted Markdown with embedded HTML can't run scripts.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function render() {
+            if (typeof marked === "undefined" || typeof DOMPurify === "undefined") return;
+            const raw = marked.parse($("md").value);
+            const safe = DOMPurify.sanitize(raw);
+            $("preview").innerHTML = safe;
+            const blob = new Blob([safe], { type: "text/html" });
+            $("dlHtml").href = URL.createObjectURL(blob);
+        }
+        $("md").addEventListener("input", render);
+        $("copyHtml").addEventListener("click", () => {
+            navigator.clipboard.writeText($("preview").innerHTML);
+            $("copyHtml").textContent = "✓ Copied";
+            setTimeout(() => $("copyHtml").textContent = "⧉ Copy HTML", 1400);
+        });
+        const tryRender = () => { if (typeof marked === "undefined") setTimeout(tryRender, 80); else render(); };
+        tryRender();
+
+    })();
+    </script>
+</body>
+</html>

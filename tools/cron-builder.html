@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Cron Expression Builder — UtilsWeb</title>
+    <meta name="description" content="Build and explain cron expressions. See the next 5 fire times.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F97316, #EC4899);">⏰</div>
+                    <div>
+                        <h1>Cron Expression Builder</h1>
+                        <p class="tagline">Build and explain cron expressions. See the next 5 fire times.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Cron expression (5-field: min hour dom month dow)</label>
+                    <input type="text" id="cron" value="*/15 9-17 * * 1-5" style="font-family:ui-monospace,monospace;">
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:10px;">
+                        <button class="btn primary" data-preset="* * * * *">Every minute</button>
+                        <button class="btn primary" data-preset="0 * * * *">Hourly</button>
+                        <button class="btn primary" data-preset="0 0 * * *">Daily midnight</button>
+                        <button class="btn primary" data-preset="0 9 * * 1-5">Weekdays 9am</button>
+                        <button class="btn primary" data-preset="0 0 * * 0">Weekly Sun</button>
+                        <button class="btn primary" data-preset="0 0 1 * *">Monthly 1st</button>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:14px;">
+                    <div><strong>Explanation</strong><div id="expl" style="margin-top:6px;color:#9aa1b6;"></div></div>
+                    <div><strong>Next 5 runs</strong><ul id="next" style="margin-top:6px;font-family:ui-monospace,monospace;font-size:13px;list-style:none;padding:0;"></ul></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>The cron expression is parsed in your browser. Next-fire times are computed by walking forward minute-by-minute (capped at one year) using your local timezone.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function parseField(f, min, max) {
+            if (f === "*") return { every: true };
+            const all = new Set();
+            for (const part of f.split(",")) {
+                const stepM = part.match(/^(.+?)\/(\d+)$/);
+                let range = stepM ? stepM[1] : part;
+                const step = stepM ? parseInt(stepM[2], 10) : 1;
+                let from, to;
+                if (range === "*") { from = min; to = max; }
+                else if (range.includes("-")) { const [a, b] = range.split("-").map(Number); from = a; to = b; }
+                else { from = to = parseInt(range, 10); }
+                for (let v = from; v <= to; v += step) all.add(v);
+            }
+            return { every: false, set: all };
+        }
+        function explain(cron) {
+            const parts = cron.trim().split(/\s+/);
+            if (parts.length !== 5) return { ok: false, msg: "Need 5 fields." };
+            const [m, h, dom, mo, dow] = parts;
+            try {
+                const fm = parseField(m, 0, 59);
+                const fh = parseField(h, 0, 23);
+                const fdom = parseField(dom, 1, 31);
+                const fmo = parseField(mo, 1, 12);
+                const fdow = parseField(dow, 0, 6);
+                return { ok: true, fm, fh, fdom, fmo, fdow };
+            } catch (e) { return { ok: false, msg: e.message }; }
+        }
+        function fmtSet(f, max, names) {
+            if (f.every) return "every";
+            const arr = [...f.set].sort((a,b)=>a-b);
+            if (arr.length > 8) return arr.length + " values";
+            return arr.map(v => names ? names[v] : v).join(", ");
+        }
+        function nextRuns(parsed, count) {
+            const out = [];
+            const d = new Date();
+            d.setSeconds(0, 0); d.setMinutes(d.getMinutes() + 1);
+            for (let safety = 0; safety < 366 * 24 * 60 && out.length < count; safety++) {
+                const ok =
+                    (parsed.fm.every  || parsed.fm.set.has(d.getMinutes())) &&
+                    (parsed.fh.every  || parsed.fh.set.has(d.getHours())) &&
+                    (parsed.fdom.every|| parsed.fdom.set.has(d.getDate())) &&
+                    (parsed.fmo.every || parsed.fmo.set.has(d.getMonth() + 1)) &&
+                    (parsed.fdow.every|| parsed.fdow.set.has(d.getDay()));
+                if (ok) out.push(new Date(d));
+                d.setMinutes(d.getMinutes() + 1);
+            }
+            return out;
+        }
+        function paint() {
+            const r = explain($("cron").value);
+            if (!r.ok) { $("expl").textContent = "⚠ " + r.msg; $("next").innerHTML = ""; return; }
+            const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+            const MOS  = [null,"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            $("expl").innerHTML = `At minute <strong>${fmtSet(r.fm)}</strong> past hour <strong>${fmtSet(r.fh)}</strong>, on day-of-month <strong>${fmtSet(r.fdom)}</strong>, in <strong>${fmtSet(r.fmo, null, MOS)}</strong>, on <strong>${fmtSet(r.fdow, null, DAYS)}</strong>.`;
+            const runs = nextRuns(r, 5);
+            $("next").innerHTML = runs.map(d => `<li>• ${d.toLocaleString()}</li>`).join("") || "<li>(none in next year)</li>";
+        }
+        $("cron").addEventListener("input", paint);
+        document.querySelectorAll("[data-preset]").forEach(btn => {
+            btn.addEventListener("click", (e) => { e.preventDefault(); $("cron").value = btn.dataset.preset; paint(); });
+        });
+        paint();
+
+    })();
+    </script>
+</body>
+</html>

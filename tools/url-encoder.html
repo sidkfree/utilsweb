@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>URL Encoder / Decoder — UtilsWeb</title>
+    <meta name="description" content="Encode or decode URLs, query strings, and percent-escaped data.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #3B82F6, #8B5CF6);">🔗</div>
+                    <div>
+                        <h1>URL Encoder / Decoder</h1>
+                        <p class="tagline">Encode or decode URLs, query strings, and percent-escaped data.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:flex;gap:18px;">
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="radio" name="mode" value="enc" checked> Encode</label>
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="radio" name="mode" value="dec"> Decode</label>
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="comp" checked> Component (encodeURIComponent)</label>
+                    </div>
+                    <label style="margin-top:10px;">Input</label>
+                    <textarea id="inp" rows="8" placeholder="https://example.com/path?q=hello world"></textarea>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Run</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="8" readonly></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Native <code>encodeURIComponent</code> / <code>decodeURI</code>. Use <strong>Component</strong> mode for query-string values; uncheck it to preserve reserved URL characters like <code>:/?#</code>.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("runBtn").addEventListener("click", () => {
+            clearError();
+            const v = $("inp").value;
+            const enc = document.querySelector('input[name="mode"]:checked').value === "enc";
+            const comp = $("comp").checked;
+            try {
+                $("out").value = enc
+                    ? (comp ? encodeURIComponent(v) : encodeURI(v))
+                    : (comp ? decodeURIComponent(v) : decodeURI(v));
+                $("resultBox").style.display = "flex";
+            } catch (e) { showError(e.message); }
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

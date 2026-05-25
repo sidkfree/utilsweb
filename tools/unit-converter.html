@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Unit Converter — UtilsWeb</title>
+    <meta name="description" content="Length, weight, temperature, volume, speed, time, data, area.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #EF4444);">📐</div>
+                    <div>
+                        <h1>Unit Converter</h1>
+                        <p class="tagline">Length, weight, temperature, volume, speed, time, data, area.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Category</label>
+                    <select id="cat" style="margin-bottom:10px;">
+                        <option value="length">Length</option>
+                        <option value="weight">Weight</option>
+                        <option value="temp">Temperature</option>
+                        <option value="volume">Volume</option>
+                        <option value="speed">Speed</option>
+                        <option value="time">Time</option>
+                        <option value="data">Data</option>
+                        <option value="area">Area</option>
+                    </select>
+                    <div class="row" style="display:grid;grid-template-columns:1fr 80px 1fr;gap:14px;align-items:end;">
+                        <div>
+                            <label>From</label>
+                            <div style="display:flex;gap:8px;">
+                                <input type="number" id="v" value="1" style="flex:1;">
+                                <select id="from" style="flex:1;"></select>
+                            </div>
+                        </div>
+                        <div style="text-align:center;font-size:24px;color:#9aa1b6;padding-bottom:8px;">=</div>
+                        <div>
+                            <label>To</label>
+                            <div style="display:flex;gap:8px;">
+                                <input type="number" id="r" readonly style="flex:1;">
+                                <select id="to" style="flex:1;"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>All factors are hard-coded. Temperature uses the Kelvin pivot. Data uses binary (1 KB = 1024 B).</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const UNITS = {
+            length: { m: 1, km: 1000, cm: 0.01, mm: 0.001, mi: 1609.34, yd: 0.9144, ft: 0.3048, in: 0.0254 },
+            weight: { g: 1, kg: 1000, mg: 0.001, t: 1e6, lb: 453.592, oz: 28.3495 },
+            volume: { L: 1, mL: 0.001, "m³": 1000, "gal (US)": 3.78541, "qt (US)": 0.946353, "cup": 0.236588, "fl oz (US)": 0.0295735 },
+            speed:  { "m/s": 1, "km/h": 1/3.6, mph: 0.44704, knot: 0.514444 },
+            time:   { s: 1, ms: 0.001, min: 60, h: 3600, day: 86400, week: 604800, year: 31536000 },
+            data:   { B: 1, KB: 1024, MB: 1048576, GB: 1073741824, TB: 1099511627776 },
+            area:   { "m²": 1, "km²": 1e6, "cm²": 1e-4, "ha": 1e4, "acre": 4046.86, "ft²": 0.092903, "in²": 6.4516e-4 },
+        };
+        function pop() {
+            const cat = $("cat").value;
+            const fs = $("from"), ts = $("to");
+            if (cat === "temp") {
+                fs.innerHTML = ts.innerHTML = ["°C","°F","K"].map(u => `<option>${u}</option>`).join("");
+                ts.value = "°F";
+            } else {
+                const keys = Object.keys(UNITS[cat]);
+                fs.innerHTML = ts.innerHTML = keys.map(u => `<option>${u}</option>`).join("");
+                ts.value = keys[1] || keys[0];
+            }
+            calc();
+        }
+        function calc() {
+            const cat = $("cat").value;
+            const v = parseFloat($("v").value) || 0;
+            const f = $("from").value, t = $("to").value;
+            let out;
+            if (cat === "temp") {
+                let k;
+                if (f === "°C") k = v + 273.15;
+                else if (f === "°F") k = (v - 32) * 5 / 9 + 273.15;
+                else k = v;
+                if (t === "°C") out = k - 273.15;
+                else if (t === "°F") out = (k - 273.15) * 9 / 5 + 32;
+                else out = k;
+            } else {
+                out = v * UNITS[cat][f] / UNITS[cat][t];
+            }
+            $("r").value = Number(out.toPrecision(8));
+        }
+        $("cat").addEventListener("change", pop);
+        ["v","from","to"].forEach(id => $(id).addEventListener("input", calc));
+        pop();
+
+    })();
+    </script>
+</body>
+</html>

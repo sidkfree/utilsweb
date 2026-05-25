@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Unix Timestamp Converter — UtilsWeb</title>
+    <meta name="description" content="Convert between Unix timestamps and human-readable dates.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #0EA5E9, #A855F7);">🕒</div>
+                    <div>
+                        <h1>Unix Timestamp Converter</h1>
+                        <p class="tagline">Convert between Unix timestamps and human-readable dates.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div>
+                            <label>Unix timestamp (seconds or ms)</label>
+                            <input type="text" id="ts" placeholder="1700000000">
+                        </div>
+                        <div>
+                            <label>Date string</label>
+                            <input type="text" id="ds" placeholder="2024-12-31T10:30">
+                        </div>
+                    </div>
+                    <div class="row" style="display:flex;gap:10px;margin-top:14px;">
+                        <button class="btn primary" id="nowBtn" type="button">Now</button>
+                        <button class="btn primary" id="tsBtn" type="button">Timestamp → Date</button>
+                        <button class="btn primary" id="dsBtn" type="button">Date → Timestamp</button>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:8px;font-family:ui-monospace,monospace;font-size:13px;">
+                    <div><span style="color:#9aa1b6;">Local:</span> <span id="rLocal"></span></div>
+                    <div><span style="color:#9aa1b6;">UTC:</span> <span id="rUtc"></span></div>
+                    <div><span style="color:#9aa1b6;">ISO 8601:</span> <span id="rIso"></span></div>
+                    <div><span style="color:#9aa1b6;">Unix (s):</span> <span id="rTsS"></span></div>
+                    <div><span style="color:#9aa1b6;">Unix (ms):</span> <span id="rTsMs"></span></div>
+                    <div><span style="color:#9aa1b6;">Relative:</span> <span id="rRel"></span></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Standard JavaScript <code>Date</code>. Timestamps less than 1e12 are assumed to be seconds; anything larger is treated as milliseconds.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function relative(d) {
+            const s = Math.round((d - Date.now()) / 1000);
+            const abs = Math.abs(s);
+            const past = s < 0;
+            let val, unit;
+            if (abs < 60) { val = abs; unit = "second"; }
+            else if (abs < 3600) { val = Math.round(abs / 60); unit = "minute"; }
+            else if (abs < 86400) { val = Math.round(abs / 3600); unit = "hour"; }
+            else if (abs < 30 * 86400) { val = Math.round(abs / 86400); unit = "day"; }
+            else if (abs < 365 * 86400) { val = Math.round(abs / 2592000); unit = "month"; }
+            else { val = Math.round(abs / 31536000); unit = "year"; }
+            return past ? `${val} ${unit}${val === 1 ? "" : "s"} ago` : `in ${val} ${unit}${val === 1 ? "" : "s"}`;
+        }
+        function paint(d) {
+            $("rLocal").textContent = d.toLocaleString();
+            $("rUtc").textContent   = d.toUTCString();
+            $("rIso").textContent   = d.toISOString();
+            $("rTsS").textContent   = Math.floor(d.getTime() / 1000);
+            $("rTsMs").textContent  = d.getTime();
+            $("rRel").textContent   = relative(d);
+        }
+        $("nowBtn").addEventListener("click", () => paint(new Date()));
+        $("tsBtn").addEventListener("click", () => {
+            const n = Number($("ts").value);
+            if (!isFinite(n)) return showError("Not a number.");
+            paint(new Date(n < 1e12 ? n * 1000 : n));
+        });
+        $("dsBtn").addEventListener("click", () => {
+            const d = new Date($("ds").value);
+            if (isNaN(d)) return showError("Couldn't parse that date.");
+            paint(d);
+        });
+        paint(new Date());
+
+    })();
+    </script>
+</body>
+</html>

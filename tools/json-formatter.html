@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>JSON Formatter — UtilsWeb</title>
+    <meta name="description" content="Pretty-print, minify, and validate JSON with helpful error messages.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #EF4444);">🧾</div>
+                    <div>
+                        <h1>JSON Formatter</h1>
+                        <p class="tagline">Pretty-print, minify, and validate JSON with helpful error messages.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>JSON</label>
+                    <textarea id="inp" rows="12" placeholder='{"hello": "world"}' style="font-family:ui-monospace,monospace;"></textarea>
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px;">
+                        <button class="btn primary" data-op="2">Pretty (2)</button>
+                        <button class="btn primary" data-op="4">Pretty (4)</button>
+                        <button class="btn primary" data-op="min">Minify</button>
+                        <button class="btn primary" data-op="validate">Validate</button>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <div id="stat" style="color:#9aa1b6;font-size:13px;"></div>
+                    <textarea id="out" rows="14" readonly style="font-family:ui-monospace,monospace;"></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Native <code>JSON.parse</code> / <code>JSON.stringify</code> — no external library. Errors are surfaced verbatim from the browser's JSON engine.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        document.querySelectorAll("[data-op]").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                clearError();
+                let parsed;
+                try { parsed = JSON.parse($("inp").value); }
+                catch (e) { showError("Invalid JSON: " + e.message); return; }
+                const op = btn.dataset.op;
+                if (op === "validate") {
+                    $("stat").textContent = "✓ Valid JSON";
+                    $("out").value = "";
+                } else if (op === "min") {
+                    $("stat").textContent = "Minified";
+                    $("out").value = JSON.stringify(parsed);
+                } else {
+                    $("stat").textContent = `Pretty (indent ${op})`;
+                    $("out").value = JSON.stringify(parsed, null, parseInt(op, 10));
+                }
+                $("resultBox").style.display = "flex";
+            });
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

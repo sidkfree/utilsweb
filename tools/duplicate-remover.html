@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Duplicate Line Remover — UtilsWeb</title>
+    <meta name="description" content="Remove duplicates, sort, shuffle, count occurrences in a list.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #14B8A6, #84CC16);">🧹</div>
+                    <div>
+                        <h1>Duplicate Line Remover</h1>
+                        <p class="tagline">Remove duplicates, sort, shuffle, count occurrences in a list.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Lines</label>
+                    <textarea id="txt" rows="12" placeholder="one\ntwo\ntwo\nthree"></textarea>
+                    <div class="row" style="display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;">
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="trim" checked> Trim whitespace</label>
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="ci"> Case-insensitive</label>
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="skipBlank" checked> Skip blank lines</label>
+                    </div>
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px;">
+                        <button class="btn primary" data-op="dedup">Remove duplicates</button>
+                        <button class="btn primary" data-op="sort">Sort A→Z</button>
+                        <button class="btn primary" data-op="rsort">Sort Z→A</button>
+                        <button class="btn primary" data-op="shuffle">Shuffle</button>
+                        <button class="btn primary" data-op="count">Count occurrences</button>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <div id="stat" style="color:#9aa1b6;font-size:13px;"></div>
+                    <textarea id="out" rows="12" readonly></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Pure JavaScript Set / Array operations — handles tens of thousands of lines instantly. Nothing is uploaded.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function prep(raw) {
+            let lines = raw.split("\n");
+            if ($("trim").checked) lines = lines.map(l => l.trim());
+            if ($("skipBlank").checked) lines = lines.filter(l => l !== "");
+            return lines;
+        }
+        function keyOf(s) { return $("ci").checked ? s.toLowerCase() : s; }
+        document.querySelectorAll("[data-op]").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                let lines = prep($("txt").value);
+                let info = "";
+                if (btn.dataset.op === "dedup") {
+                    const seen = new Set(), out = [];
+                    for (const l of lines) {
+                        const k = keyOf(l);
+                        if (!seen.has(k)) { seen.add(k); out.push(l); }
+                    }
+                    info = `${lines.length} → ${out.length} lines`;
+                    lines = out;
+                } else if (btn.dataset.op === "sort") {
+                    lines = lines.sort((a, b) => keyOf(a).localeCompare(keyOf(b)));
+                } else if (btn.dataset.op === "rsort") {
+                    lines = lines.sort((a, b) => keyOf(b).localeCompare(keyOf(a)));
+                } else if (btn.dataset.op === "shuffle") {
+                    for (let i = lines.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [lines[i], lines[j]] = [lines[j], lines[i]];
+                    }
+                } else if (btn.dataset.op === "count") {
+                    const map = new Map();
+                    for (const l of lines) { const k = keyOf(l); map.set(k, (map.get(k) || 0) + 1); }
+                    lines = [...map.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${v}\t${k}`);
+                    info = `${map.size} unique`;
+                }
+                $("stat").textContent = info;
+                $("out").value = lines.join("\n");
+                $("resultBox").style.display = "flex";
+            });
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

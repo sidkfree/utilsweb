@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>PDF → Images — UtilsWeb</title>
+    <meta name="description" content="Render each PDF page to PNG. Download individually or as a ZIP.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #3B82F6, #8B5CF6);">🖼️</div>
+                    <div>
+                        <h1>PDF → Images</h1>
+                        <p class="tagline">Render each PDF page to PNG. Download individually or as a ZIP.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>PDF</label>
+                    <input type="file" id="file" accept="application/pdf">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;">
+                        <div>
+                            <label>Scale (1.0 = 96 dpi)</label>
+                            <input type="number" id="scale" value="2" min="0.5" max="4" step="0.5">
+                        </div>
+                        <div>
+                            <label>Format</label>
+                            <select id="fmt">
+                                <option value="image/png" selected>PNG</option>
+                                <option value="image/jpeg">JPEG</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Render</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:14px;">
+                    <a class="btn primary" id="dl" download="pages.zip">⬇ Download all (ZIP)</a>
+                    <div id="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Pages are rendered by Mozilla's <a href="https://mozilla.github.io/pdf.js/" target="_blank" rel="noopener">pdf.js</a> into canvases, then encoded as PNG/JPEG. Higher scale = higher resolution + bigger files.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        async function waitForPdfjs() {
+            for (let i = 0; i < 30 && typeof pdfjsLib === "undefined"; i++) await new Promise(r => setTimeout(r, 100));
+            if (typeof pdfjsLib === "undefined") throw new Error("pdf.js failed to load");
+            pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.js";
+        }
+        $("runBtn").addEventListener("click", async () => {
+            clearError();
+            const f = $("file").files[0]; if (!f) return showError("Pick a PDF first.");
+            try { await waitForPdfjs(); } catch (e) { return showError(e.message); }
+            const buf = await f.arrayBuffer();
+            const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+            const grid = $("grid"); grid.innerHTML = "";
+            const zip = (typeof JSZip !== "undefined") ? new JSZip() : null;
+            const scale = parseFloat($("scale").value) || 2;
+            const fmt = $("fmt").value;
+            for (let i = 1; i <= doc.numPages; i++) {
+                const page = await doc.getPage(i);
+                const vp = page.getViewport({ scale });
+                const c = document.createElement("canvas");
+                c.width = vp.width; c.height = vp.height;
+                await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+                const blob = await new Promise(res => c.toBlob(res, fmt, 0.92));
+                const url = URL.createObjectURL(blob);
+                if (zip) zip.file(`page-${String(i).padStart(3, "0")}.${fmt === "image/png" ? "png" : "jpg"}`, blob);
+                const cell = document.createElement("div");
+                cell.innerHTML = `<a href="${url}" download="page-${i}.${fmt === "image/png" ? "png" : "jpg"}"><img src="${url}" style="width:100%;border-radius:6px;border:1px solid rgba(255,255,255,.08);"></a><div style="text-align:center;color:#9aa1b6;font-size:12px;margin-top:4px;">page ${i}</div>`;
+                grid.appendChild(cell);
+            }
+            if (zip) {
+                const blob = await zip.generateAsync({ type: "blob" });
+                $("dl").href = URL.createObjectURL(blob);
+            }
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

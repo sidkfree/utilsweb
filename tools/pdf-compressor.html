@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>PDF Compressor — UtilsWeb</title>
+    <meta name="description" content="Shrink a PDF by re-encoding embedded images at lower quality.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #EF4444);">🗜️</div>
+                    <div>
+                        <h1>PDF Compressor</h1>
+                        <p class="tagline">Shrink a PDF by re-encoding embedded images at lower quality.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>PDF</label>
+                    <input type="file" id="file" accept="application/pdf">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;">
+                        <div>
+                            <label>JPEG quality: <span id="qLbl">60</span>%</label>
+                            <input type="range" id="q" min="20" max="95" value="60" style="width:100%;">
+                        </div>
+                        <div>
+                            <label>Max page width (px)</label>
+                            <input type="number" id="mw" value="1400" min="400" max="4000">
+                        </div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Compress</button>
+                    <div id="progress" style="margin-top:8px;color:#9aa1b6;font-size:13px;"></div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;align-items:center;">
+                    <div id="info" style="color:#9aa1b6;"></div>
+                    <a class="btn primary" id="dl" download="compressed.pdf">⬇ Download PDF</a>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Each page is rendered with pdf.js, re-encoded as JPEG at your chosen quality, then embedded into a fresh PDF with pdf-lib. Text becomes raster — searchability is lost, but file size drops dramatically.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("q").addEventListener("input", () => $("qLbl").textContent = $("q").value);
+        async function waitForPdfjs() {
+            for (let i = 0; i < 30 && typeof pdfjsLib === "undefined"; i++) await new Promise(r => setTimeout(r, 100));
+            if (typeof pdfjsLib === "undefined") throw new Error("pdf.js failed to load");
+            pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.js";
+        }
+        $("runBtn").addEventListener("click", async () => {
+            clearError();
+            const f = $("file").files[0]; if (!f) return showError("Pick a PDF first.");
+            try { await waitForPdfjs(); } catch (e) { return showError(e.message); }
+            if (typeof PDFLib === "undefined") return showError("PDF library still loading...");
+            const buf = await f.arrayBuffer();
+            const src = await pdfjsLib.getDocument({ data: buf }).promise;
+            const out = await PDFLib.PDFDocument.create();
+            const q = parseInt($("q").value, 10) / 100;
+            const maxW = parseInt($("mw").value, 10) || 1400;
+            for (let i = 1; i <= src.numPages; i++) {
+                $("progress").textContent = `Rendering page ${i} / ${src.numPages}...`;
+                await new Promise(r => setTimeout(r, 0));
+                const page = await src.getPage(i);
+                let vp = page.getViewport({ scale: 1 });
+                const scale = Math.min(2, maxW / vp.width);
+                vp = page.getViewport({ scale });
+                const c = document.createElement("canvas");
+                c.width = vp.width; c.height = vp.height;
+                await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+                const blob = await new Promise(res => c.toBlob(res, "image/jpeg", q));
+                const jpgBytes = new Uint8Array(await blob.arrayBuffer());
+                const img = await out.embedJpg(jpgBytes);
+                const newPage = out.addPage([vp.width, vp.height]);
+                newPage.drawImage(img, { x: 0, y: 0, width: vp.width, height: vp.height });
+            }
+            const result = await out.save();
+            const blob = new Blob([result], { type: "application/pdf" });
+            $("info").textContent = `Original: ${(f.size/1024).toFixed(0)} KB → Compressed: ${(blob.size/1024).toFixed(0)} KB (${Math.round(blob.size / f.size * 100)}%)`;
+            $("dl").href = URL.createObjectURL(blob);
+            $("progress").textContent = "Done.";
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

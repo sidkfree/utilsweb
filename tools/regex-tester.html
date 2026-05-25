@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Regex Tester — UtilsWeb</title>
+    <meta name="description" content="Build and test regular expressions with live match highlighting.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EC4899, #F59E0B);">🪄</div>
+                    <div>
+                        <h1>Regex Tester</h1>
+                        <p class="tagline">Build and test regular expressions with live match highlighting.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 120px;gap:14px;">
+                        <div>
+                            <label>Pattern</label>
+                            <input type="text" id="pat" placeholder="\\b\\w+@\\w+\\.\\w+\\b" style="font-family:ui-monospace,monospace;">
+                        </div>
+                        <div>
+                            <label>Flags</label>
+                            <input type="text" id="flags" placeholder="gi" value="g" style="font-family:ui-monospace,monospace;">
+                        </div>
+                    </div>
+                    <label style="margin-top:10px;">Test string</label>
+                    <textarea id="txt" rows="8" placeholder="Test input..."></textarea>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;">
+                    <div id="stat" style="color:#9aa1b6;font-size:13px;">Start typing.</div>
+                    <div id="hl" style="font-family:ui-monospace,monospace;font-size:14px;line-height:1.6;white-space:pre-wrap;background:rgba(0,0,0,.25);padding:12px;border-radius:8px;min-height:80px;"></div>
+                    <pre id="groups" style="font-family:ui-monospace,monospace;font-size:12px;color:#9aa1b6;white-space:pre-wrap;"></pre>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Uses native JavaScript <code>RegExp</code>. Flags supported: <code>g</code> (global), <code>i</code> (case-insensitive), <code>m</code> (multiline), <code>s</code> (dotall), <code>u</code> (unicode), <code>y</code> (sticky).</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function esc(s) { return s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+        function run() {
+            clearError();
+            const p = $("pat").value, f = $("flags").value, t = $("txt").value;
+            if (!p) { $("hl").textContent = t; $("stat").textContent = "Enter a pattern."; $("groups").textContent = ""; return; }
+            let re;
+            try { re = new RegExp(p, f); } catch (e) { showError(e.message); return; }
+            const matches = [...t.matchAll(re.global ? re : new RegExp(p, f + "g"))];
+            let html = "", last = 0;
+            for (const m of matches) {
+                html += esc(t.slice(last, m.index));
+                html += `<mark style="background:rgba(0,229,255,.3);color:#fff;border-radius:3px;padding:0 2px;">${esc(m[0])}</mark>`;
+                last = m.index + m[0].length;
+            }
+            html += esc(t.slice(last));
+            $("hl").innerHTML = html;
+            $("stat").textContent = `${matches.length} match${matches.length === 1 ? "" : "es"}`;
+            $("groups").textContent = matches.slice(0, 50).map((m, i) =>
+                `[${i}] "${m[0]}" @ ${m.index}` + (m.length > 1 ? "\n  groups: " + JSON.stringify(m.slice(1)) : "")
+            ).join("\n");
+        }
+        ["pat", "flags", "txt"].forEach(id => $(id).addEventListener("input", run));
+
+    })();
+    </script>
+</body>
+</html>

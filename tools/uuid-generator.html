@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>UUID Generator — UtilsWeb</title>
+    <meta name="description" content="Generate cryptographically random UUID v4 in bulk.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #8B5CF6, #EC4899);">🆔</div>
+                    <div>
+                        <h1>UUID Generator</h1>
+                        <p class="tagline">Generate cryptographically random UUID v4 in bulk.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row">
+                        <div>
+                            <label>How many</label>
+                            <input type="number" id="count" value="10" min="1" max="10000">
+                        </div>
+                        <div>
+                            <label>Format</label>
+                            <select id="fmt">
+                                <option value="hyphen" selected>with hyphens</option>
+                                <option value="plain">no hyphens</option>
+                                <option value="braces">{braces}</option>
+                                <option value="upper">UPPERCASE</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn primary" id="genBtn" type="button" style="margin-top:14px;">Generate</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="14" readonly style="font-family:ui-monospace,monospace;"></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Backed by <code>crypto.randomUUID()</code> when available — true cryptographically-secure randomness from your browser, never a server.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function uuid() {
+            if (crypto.randomUUID) return crypto.randomUUID();
+            const a = new Uint8Array(16);
+            crypto.getRandomValues(a);
+            a[6] = (a[6] & 0x0f) | 0x40;
+            a[8] = (a[8] & 0x3f) | 0x80;
+            const h = [...a].map(b => b.toString(16).padStart(2, "0")).join("");
+            return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+        }
+        $("genBtn").addEventListener("click", () => {
+            const n = Math.max(1, Math.min(10000, parseInt($("count").value, 10) || 1));
+            const fmt = $("fmt").value;
+            const out = [];
+            for (let i = 0; i < n; i++) {
+                let u = uuid();
+                if (fmt === "plain")  u = u.replace(/-/g, "");
+                if (fmt === "upper")  u = u.toUpperCase();
+                if (fmt === "braces") u = `{${u}}`;
+                out.push(u);
+            }
+            $("out").value = out.join("\n");
+            $("resultBox").style.display = "flex";
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

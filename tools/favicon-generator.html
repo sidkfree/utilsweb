@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Favicon Generator — UtilsWeb</title>
+    <meta name="description" content="Generate a 16/32/48/64/128/180/192/512 favicon set + ZIP from one source image.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F43F5E, #F59E0B);">🌟</div>
+                    <div>
+                        <h1>Favicon Generator</h1>
+                        <p class="tagline">Generate a 16/32/48/64/128/180/192/512 favicon set + ZIP from one source image.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Source image (square PNG/SVG/JPG, ideally ≥ 512px)</label>
+                    <input type="file" id="file" accept="image/*">
+                    <div class="row" style="display:flex;gap:18px;margin-top:10px;align-items:center;">
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="rounded"> Rounded corners (iOS-style)</label>
+                        <div>
+                            <label>Background</label>
+                            <input type="color" id="bg" value="#ffffff">
+                        </div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;" disabled>Generate set</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:14px;">
+                    <div id="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;"></div>
+                    <a class="btn primary" id="dl" download="favicons.zip">⬇ Download ZIP</a>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Each size is rendered onto its own canvas and PNG-encoded. <a href="https://stuk.github.io/jszip/" target="_blank" rel="noopener">JSZip</a> bundles them with a ready-to-paste HTML snippet and a web app <code>manifest.json</code>.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        let img = null;
+        const SIZES = [16, 32, 48, 64, 128, 180, 192, 512];
+        $("file").addEventListener("change", () => {
+            const f = $("file").files[0]; if (!f) return;
+            const r = new FileReader();
+            r.onload = () => { img = new Image(); img.onload = () => $("runBtn").disabled = false; img.src = r.result; };
+            r.readAsDataURL(f);
+        });
+        function render(n) {
+            const c = document.createElement("canvas");
+            c.width = c.height = n;
+            const ctx = c.getContext("2d");
+            ctx.fillStyle = $("bg").value;
+            if ($("rounded").checked) {
+                const r = n * 0.22;
+                ctx.beginPath();
+                ctx.moveTo(r, 0); ctx.lineTo(n - r, 0); ctx.arcTo(n, 0, n, r, r);
+                ctx.lineTo(n, n - r); ctx.arcTo(n, n, n - r, n, r);
+                ctx.lineTo(r, n); ctx.arcTo(0, n, 0, n - r, r);
+                ctx.lineTo(0, r); ctx.arcTo(0, 0, r, 0, r);
+                ctx.closePath();
+                ctx.fill(); ctx.clip();
+            } else {
+                ctx.fillRect(0, 0, n, n);
+            }
+            ctx.drawImage(img, 0, 0, n, n);
+            return c;
+        }
+        $("runBtn").addEventListener("click", async () => {
+            clearError();
+            if (typeof JSZip === "undefined") return showError("ZIP library still loading...");
+            const grid = $("grid"); grid.innerHTML = "";
+            const zip = new JSZip();
+            for (const n of SIZES) {
+                const c = render(n);
+                const blob = await new Promise(res => c.toBlob(res, "image/png"));
+                zip.file(`favicon-${n}x${n}.png`, blob);
+                const url = URL.createObjectURL(blob);
+                const cell = document.createElement("div");
+                cell.style.cssText = "text-align:center;font-size:11px;color:#9aa1b6;";
+                cell.innerHTML = `<img src="${url}" style="max-width:64px;background:#fff;border-radius:6px;"><br>${n}×${n}`;
+                grid.appendChild(cell);
+            }
+            zip.file("apple-touch-icon.png", await new Promise(res => render(180).toBlob(res, "image/png")));
+            const html = '<link rel="icon" sizes="32x32" href="favicon-32x32.png">\n<link rel="icon" sizes="16x16" href="favicon-16x16.png">\n<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">\n<link rel="manifest" href="manifest.json">';
+            zip.file("snippet.html", html);
+            zip.file("manifest.json", JSON.stringify({ name: "App", icons: SIZES.filter(n => n >= 192).map(n => ({ src: `favicon-${n}x${n}.png`, sizes: `${n}x${n}`, type: "image/png" })) }, null, 2));
+            const blob = await zip.generateAsync({ type: "blob" });
+            $("dl").href = URL.createObjectURL(blob);
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

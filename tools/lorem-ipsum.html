@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Lorem Ipsum Generator — UtilsWeb</title>
+    <meta name="description" content="Generate placeholder text — paragraphs, sentences, words, lists.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #EF4444);">📝</div>
+                    <div>
+                        <h1>Lorem Ipsum Generator</h1>
+                        <p class="tagline">Generate placeholder text — paragraphs, sentences, words, lists.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row">
+                        <div>
+                            <label>What</label>
+                            <select id="kind">
+                                <option value="paragraphs" selected>Paragraphs</option>
+                                <option value="sentences">Sentences</option>
+                                <option value="words">Words</option>
+                                <option value="list">List items</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>How many</label>
+                            <input type="number" id="count" value="5" min="1" max="500">
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:14px;">
+                        <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="startLorem" checked> Start with "Lorem ipsum dolor sit amet..."</label>
+                    </div>
+                    <button class="btn primary" id="genBtn" type="button" style="margin-top:14px;">Generate</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="14" readonly></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Words are sampled from a built-in Lorem-Ipsum vocabulary. Pure client-side randomness — refresh and you'll get a new sample.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const WORDS = ("lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt culpa qui officia deserunt mollit anim id est laborum vivamus mauris malesuada ligula nec scelerisque ex tincidunt vitae fusce sodales finibus integer eget faucibus mi nullam viverra blandit lectus a ornare felis").split(" ");
+        function rnd(n) { return Math.floor(Math.random() * n); }
+        function word() { return WORDS[rnd(WORDS.length)]; }
+        function sentence(min = 6, max = 14) {
+            const n = min + rnd(max - min);
+            const ws = []; for (let i = 0; i < n; i++) ws.push(word());
+            ws[0] = ws[0][0].toUpperCase() + ws[0].slice(1);
+            return ws.join(" ") + ".";
+        }
+        function paragraph(min = 3, max = 7) {
+            const n = min + rnd(max - min);
+            const ss = []; for (let i = 0; i < n; i++) ss.push(sentence());
+            return ss.join(" ");
+        }
+        $("genBtn").addEventListener("click", () => {
+            const k = $("kind").value;
+            const n = Math.max(1, Math.min(500, parseInt($("count").value, 10) || 1));
+            let out = "";
+            if (k === "words") {
+                const ws = []; for (let i = 0; i < n; i++) ws.push(word());
+                if ($("startLorem").checked) ws[0] = "Lorem";
+                out = ws.join(" ");
+            } else if (k === "sentences") {
+                const ss = []; for (let i = 0; i < n; i++) ss.push(sentence());
+                if ($("startLorem").checked) ss[0] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+                out = ss.join(" ");
+            } else if (k === "paragraphs") {
+                const ps = []; for (let i = 0; i < n; i++) ps.push(paragraph());
+                if ($("startLorem").checked) ps[0] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " + ps[0];
+                out = ps.join("\n\n");
+            } else {
+                const ls = []; for (let i = 0; i < n; i++) ls.push("• " + sentence(3, 8));
+                out = ls.join("\n");
+            }
+            $("out").value = out;
+            $("resultBox").style.display = "flex";
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

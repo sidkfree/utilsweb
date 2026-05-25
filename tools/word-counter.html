@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Word Counter — UtilsWeb</title>
+    <meta name="description" content="Count words, characters, sentences, paragraphs and estimated reading time.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #06B6D4, #3B82F6);">🔢</div>
+                    <div>
+                        <h1>Word Counter</h1>
+                        <p class="tagline">Count words, characters, sentences, paragraphs and estimated reading time.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Paste your text</label>
+                    <textarea id="txt" rows="14" placeholder="Type or paste any text here..."></textarea>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;">
+                    <div class="row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+                        <div><strong id="words">0</strong><div>words</div></div>
+                        <div><strong id="chars">0</strong><div>chars</div></div>
+                        <div><strong id="charsNs">0</strong><div>chars (no spaces)</div></div>
+                        <div><strong id="sentences">0</strong><div>sentences</div></div>
+                        <div><strong id="paragraphs">0</strong><div>paragraphs</div></div>
+                        <div><strong id="reading">0 min</strong><div>reading (200 wpm)</div></div>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Everything happens in your browser — your text never leaves this page. Words are counted by splitting on whitespace; reading time assumes ~200 words per minute.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const t = $("txt");
+        function update() {
+            const s = t.value || "";
+            const trimmed = s.trim();
+            const words = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
+            const chars = s.length;
+            const charsNs = s.replace(/\s/g, "").length;
+            const sentences = trimmed ? (trimmed.match(/[^.!?]+[.!?]+/g) || [trimmed]).length : 0;
+            const paragraphs = trimmed ? trimmed.split(/\n{2,}/).filter(p => p.trim()).length : 0;
+            const mins = Math.max(1, Math.round(words / 200));
+            $("words").textContent = words.toLocaleString();
+            $("chars").textContent = chars.toLocaleString();
+            $("charsNs").textContent = charsNs.toLocaleString();
+            $("sentences").textContent = sentences.toLocaleString();
+            $("paragraphs").textContent = paragraphs.toLocaleString();
+            $("reading").textContent = mins + " min";
+        }
+        t.addEventListener("input", update);
+        update();
+
+    })();
+    </script>
+</body>
+</html>

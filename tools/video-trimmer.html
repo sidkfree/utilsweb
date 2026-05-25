@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Video Trimmer — UtilsWeb</title>
+    <meta name="description" content="Cut a video to a specific start/end time without re-encoding.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EF4444, #EC4899);">🎬</div>
+                    <div>
+                        <h1>Video Trimmer</h1>
+                        <p class="tagline">Cut a video to a specific start/end time without re-encoding.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Video</label>
+                    <input type="file" id="file" accept="video/*">
+                    <video id="preview" controls style="width:100%;margin-top:10px;border-radius:8px;display:none;"></video>
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;">
+                        <div>
+                            <label>Start (s)</label>
+                            <input type="number" id="start" value="0" min="0" step="0.1">
+                        </div>
+                        <div>
+                            <label>End (s)</label>
+                            <input type="number" id="end" placeholder="auto" step="0.1">
+                        </div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Trim</button>
+                    <div id="progress" style="margin-top:8px;color:#9aa1b6;font-size:13px;"></div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;align-items:center;">
+                    <video id="result" controls style="width:100%;border-radius:8px;"></video>
+                    <a class="btn primary" id="dl" download="trimmed.mp4">⬇ Download</a>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Trimmed with FFmpeg's <code>-ss</code> / <code>-to</code> and <code>-c copy</code> (stream copy, no re-encode) — fast and lossless on container-aligned cuts.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        let ffmpeg = null;
+        async function loadFfmpeg() {
+            if (ffmpeg) return ffmpeg;
+            if (typeof FFmpeg === "undefined") throw new Error("FFmpeg lib not loaded");
+            ffmpeg = FFmpeg.createFFmpeg({
+                log: false,
+                corePath: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js"
+            });
+            await ffmpeg.load();
+            return ffmpeg;
+        }
+
+        $("file").addEventListener("change", () => {
+            const f = $("file").files[0]; if (!f) return;
+            const url = URL.createObjectURL(f);
+            const p = $("preview"); p.src = url; p.style.display = "block";
+            p.addEventListener("loadedmetadata", () => { if (!$("end").value) $("end").value = p.duration.toFixed(1); }, { once: true });
+        });
+        $("runBtn").addEventListener("click", async () => {
+            clearError();
+            const f = $("file").files[0]; if (!f) return showError("Pick a video.");
+            const s = Math.max(0, parseFloat($("start").value) || 0);
+            const e = parseFloat($("end").value) || 0;
+            if (e <= s) return showError("End must be greater than start.");
+            try {
+                $("progress").textContent = "Loading FFmpeg...";
+                const ff = await loadFfmpeg();
+                ff.setProgress(({ ratio }) => { if (ratio > 0) $("progress").textContent = `Trimming... ${(ratio * 100).toFixed(0)}%`; });
+                const data = new Uint8Array(await f.arrayBuffer());
+                const ext = (f.name.match(/\.([a-z0-9]+)$/i) || [,"mp4"])[1].toLowerCase();
+                ff.FS("writeFile", "in." + ext, data);
+                await ff.run("-ss", String(s), "-to", String(e), "-i", "in." + ext, "-c", "copy", "out.mp4");
+                const out = ff.FS("readFile", "out.mp4");
+                const blob = new Blob([out.buffer], { type: "video/mp4" });
+                const url = URL.createObjectURL(blob);
+                $("result").src = url; $("dl").href = url;
+                $("dl").download = f.name.replace(/\.[^.]+$/, "") + "-trimmed.mp4";
+                $("progress").textContent = "Done.";
+                $("resultBox").style.display = "flex";
+            } catch (e) { showError(e.message || String(e)); }
+        });
+
+    })();
+    </script>
+</body>
+</html>

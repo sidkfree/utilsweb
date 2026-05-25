@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Case Converter — UtilsWeb</title>
+    <meta name="description" content="Convert text to UPPER, lower, Title, camelCase, snake_case, kebab-case and more.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #3B82F6, #8B5CF6);">🔤</div>
+                    <div>
+                        <h1>Case Converter</h1>
+                        <p class="tagline">Convert text to UPPER, lower, Title, camelCase, snake_case, kebab-case and more.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Text</label>
+                    <textarea id="txt" rows="6" placeholder="The quick brown fox jumps over the lazy dog">The quick brown fox jumps over the lazy dog</textarea>
+                    <div class="row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px;">
+                        <button class="btn primary" data-c="upper">UPPER CASE</button>
+                        <button class="btn primary" data-c="lower">lower case</button>
+                        <button class="btn primary" data-c="title">Title Case</button>
+                        <button class="btn primary" data-c="sentence">Sentence case</button>
+                        <button class="btn primary" data-c="camel">camelCase</button>
+                        <button class="btn primary" data-c="pascal">PascalCase</button>
+                        <button class="btn primary" data-c="snake">snake_case</button>
+                        <button class="btn primary" data-c="kebab">kebab-case</button>
+                        <button class="btn primary" data-c="constant">CONSTANT_CASE</button>
+                        <button class="btn primary" data-c="alt">aLtErNaTiNg</button>
+                        <button class="btn primary" data-c="invert">iNVERT cASE</button>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="6" readonly></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Pure JavaScript regex transforms. No server roundtrip — your text stays in your browser.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function words(s) { return s.match(/[A-Za-z0-9]+/g) || []; }
+        function toCase(s, kind) {
+            const ws = words(s);
+            switch (kind) {
+                case "upper":    return s.toUpperCase();
+                case "lower":    return s.toLowerCase();
+                case "title":    return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+                case "sentence": return s.toLowerCase().replace(/(^|[.!?]\s+)([a-z])/g, (_,p,c) => p + c.toUpperCase());
+                case "camel":    return ws.map((w,i)=> i===0 ? w.toLowerCase() : w[0].toUpperCase()+w.slice(1).toLowerCase()).join("");
+                case "pascal":   return ws.map(w => w[0].toUpperCase()+w.slice(1).toLowerCase()).join("");
+                case "snake":    return ws.map(w => w.toLowerCase()).join("_");
+                case "kebab":    return ws.map(w => w.toLowerCase()).join("-");
+                case "constant": return ws.map(w => w.toUpperCase()).join("_");
+                case "alt":      return s.split("").map((c,i)=> i%2 ? c.toUpperCase() : c.toLowerCase()).join("");
+                case "invert":   return s.split("").map(c => c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()).join("");
+                default: return s;
+            }
+        }
+        document.querySelectorAll("[data-c]").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                const out = toCase($("txt").value, btn.dataset.c);
+                $("out").value = out;
+                $("resultBox").style.display = "flex";
+            });
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

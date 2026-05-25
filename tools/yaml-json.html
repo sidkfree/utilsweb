@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>YAML ⇄ JSON — UtilsWeb</title>
+    <meta name="description" content="Convert between YAML and JSON. Validates as it parses.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #F59E0B, #EF4444);">🔀</div>
+                    <div>
+                        <h1>YAML ⇄ JSON</h1>
+                        <p class="tagline">Convert between YAML and JSON. Validates as it parses.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Input</label>
+                    <textarea id="inp" rows="14" placeholder="name: Ada\nage: 36\nskills:\n  - Math\n  - Computing" style="font-family:ui-monospace,monospace;"></textarea>
+                    <div class="row" style="display:flex;gap:10px;margin-top:14px;">
+                        <button class="btn primary" id="y2j" type="button">YAML → JSON</button>
+                        <button class="btn primary" id="j2y" type="button">JSON → YAML</button>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;">
+                    <textarea id="out" rows="14" readonly style="font-family:ui-monospace,monospace;"></textarea>
+                    <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Uses <a href="https://github.com/nodeca/js-yaml" target="_blank" rel="noopener">js-yaml</a> for parsing/dumping (YAML 1.2). Loaded once over HTTPS from a CDN — afterwards your data stays local.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function ready() { return typeof jsyaml !== "undefined"; }
+        $("y2j").addEventListener("click", () => {
+            clearError();
+            if (!ready()) return showError("Library still loading...");
+            try {
+                const obj = jsyaml.load($("inp").value);
+                $("out").value = JSON.stringify(obj, null, 2);
+                $("resultBox").style.display = "flex";
+            } catch (e) { showError(e.message); }
+        });
+        $("j2y").addEventListener("click", () => {
+            clearError();
+            if (!ready()) return showError("Library still loading...");
+            try {
+                const obj = JSON.parse($("inp").value);
+                $("out").value = jsyaml.dump(obj, { indent: 2, lineWidth: 120 });
+                $("resultBox").style.display = "flex";
+            } catch (e) { showError(e.message); }
+        });
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("out").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+
+    })();
+    </script>
+</body>
+</html>

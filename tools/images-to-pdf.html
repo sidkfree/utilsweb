@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Images → PDF — UtilsWeb</title>
+    <meta name="description" content="Combine JPG / PNG / WebP images into a single PDF. Drag to reorder.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EF4444, #EC4899);">🖼️</div>
+                    <div>
+                        <h1>Images → PDF</h1>
+                        <p class="tagline">Combine JPG / PNG / WebP images into a single PDF. Drag to reorder.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Images (multi-select)</label>
+                    <input type="file" id="files" accept="image/*" multiple>
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;">
+                        <div>
+                            <label>Page size</label>
+                            <select id="size">
+                                <option value="A4" selected>A4</option>
+                                <option value="Letter">Letter</option>
+                                <option value="fit">Fit to image</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Orientation</label>
+                            <select id="ori">
+                                <option value="auto" selected>Auto</option>
+                                <option value="portrait">Portrait</option>
+                                <option value="landscape">Landscape</option>
+                            </select>
+                        </div>
+                    </div>
+                    <ul id="list" style="margin-top:10px;list-style:none;padding:0;font-size:13px;color:#9aa1b6;"></ul>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Build PDF</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;align-items:center;">
+                    <a class="btn primary" id="dl" download="images.pdf">⬇ Download PDF</a>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Uses <a href="https://pdf-lib.js.org" target="_blank" rel="noopener">pdf-lib</a> to embed each image and place it centred on its page. JPEG and PNG are embedded directly; WebP support requires re-encoding (auto-converted to PNG by your browser).</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        $("files").addEventListener("change", () => {
+            const list = $("list");
+            list.innerHTML = "";
+            for (const f of $("files").files) {
+                const li = document.createElement("li");
+                li.textContent = `• ${f.name} — ${(f.size/1024).toFixed(1)} KB`;
+                list.appendChild(li);
+            }
+        });
+        const SIZES = { A4: [595, 842], Letter: [612, 792] };
+        $("runBtn").addEventListener("click", async () => {
+            clearError();
+            if (typeof PDFLib === "undefined") return showError("PDF library still loading...");
+            const files = [...$("files").files];
+            if (!files.length) return showError("Pick at least one image.");
+            const pdf = await PDFLib.PDFDocument.create();
+            for (const f of files) {
+                const bytes = new Uint8Array(await f.arrayBuffer());
+                const img = f.type.includes("png") ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
+                let pw, ph;
+                if ($("size").value === "fit") { pw = img.width; ph = img.height; }
+                else {
+                    [pw, ph] = SIZES[$("size").value];
+                    const ori = $("ori").value;
+                    if (ori === "landscape" || (ori === "auto" && img.width > img.height)) [pw, ph] = [ph, pw];
+                }
+                const page = pdf.addPage([pw, ph]);
+                const sc = Math.min(pw / img.width, ph / img.height);
+                const w = img.width * sc, h = img.height * sc;
+                page.drawImage(img, { x: (pw - w) / 2, y: (ph - h) / 2, width: w, height: h });
+            }
+            const out = await pdf.save();
+            const url = URL.createObjectURL(new Blob([out], { type: "application/pdf" }));
+            $("dl").href = url;
+            $("resultBox").style.display = "flex";
+        });
+
+    })();
+    </script>
+</body>
+</html>

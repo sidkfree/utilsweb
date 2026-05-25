@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>CSS Gradient Generator — UtilsWeb</title>
+    <meta name="description" content="Design a linear or radial gradient — preview live and copy CSS.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #D946EF, #3B82F6);">🌈</div>
+                    <div>
+                        <h1>CSS Gradient Generator</h1>
+                        <p class="tagline">Design a linear or radial gradient — preview live and copy CSS.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                        <div>
+                            <label>Type</label>
+                            <select id="type">
+                                <option value="linear" selected>Linear</option>
+                                <option value="radial">Radial</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Angle (linear)</label>
+                            <input type="number" id="angle" value="135" min="0" max="360">
+                        </div>
+                        <div>
+                            <label>Stops</label>
+                            <input type="number" id="nstops" value="2" min="2" max="6">
+                        </div>
+                    </div>
+                    <div id="stops" class="row" style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;"></div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;">
+                    <div id="prev" style="height:200px;border-radius:12px;border:1px solid rgba(255,255,255,.08);"></div>
+                    <div style="display:flex;gap:10px;align-items:stretch;">
+                        <input type="text" id="css" readonly style="flex:1;font-family:ui-monospace,monospace;">
+                        <button class="btn primary" id="copyBtn">⧉ Copy</button>
+                    </div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Pure CSS gradient — preview is the same string you copy. Works in every modern browser.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const DEFAULTS = ["#06B6D4", "#7C3AED", "#EC4899", "#F59E0B", "#22C55E", "#3B82F6"];
+        function build() {
+            const n = Math.max(2, Math.min(6, parseInt($("nstops").value, 10) || 2));
+            const cur = [...$("stops").querySelectorAll("input[type=color]")].map(i => i.value);
+            $("stops").innerHTML = "";
+            for (let i = 0; i < n; i++) {
+                const wrap = document.createElement("div");
+                wrap.innerHTML = `<label style="font-size:12px;color:#9aa1b6;">Stop ${i+1}</label><input type="color" value="${cur[i] || DEFAULTS[i]}" style="display:block;width:80px;height:42px;">`;
+                $("stops").appendChild(wrap);
+                wrap.querySelector("input").addEventListener("input", paint);
+            }
+            paint();
+        }
+        function paint() {
+            const type = $("type").value;
+            const ang = parseInt($("angle").value, 10) || 135;
+            const stops = [...$("stops").querySelectorAll("input[type=color]")].map(i => i.value).join(", ");
+            const css = type === "linear" ? `linear-gradient(${ang}deg, ${stops})` : `radial-gradient(circle, ${stops})`;
+            $("prev").style.background = css;
+            $("css").value = "background: " + css + ";";
+        }
+        $("type").addEventListener("change", paint);
+        $("angle").addEventListener("input", paint);
+        $("nstops").addEventListener("input", build);
+        $("copyBtn").addEventListener("click", () => {
+            navigator.clipboard.writeText($("css").value);
+            $("copyBtn").textContent = "✓ Copied";
+            setTimeout(() => $("copyBtn").textContent = "⧉ Copy", 1400);
+        });
+        build();
+
+    })();
+    </script>
+</body>
+</html>

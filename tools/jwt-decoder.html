@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>JWT Decoder — UtilsWeb</title>
+    <meta name="description" content="Decode a JSON Web Token — see the header, payload, and signature.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EF4444, #EC4899);">🔐</div>
+                    <div>
+                        <h1>JWT Decoder</h1>
+                        <p class="tagline">Decode a JSON Web Token — see the header, payload, and signature.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>JWT</label>
+                    <textarea id="inp" rows="6" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." style="font-family:ui-monospace,monospace;word-break:break-all;"></textarea>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Decode</button>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:14px;">
+                    <div><strong>Header</strong><pre id="head" style="font-family:ui-monospace,monospace;font-size:12px;background:rgba(0,0,0,.25);padding:12px;border-radius:8px;white-space:pre-wrap;color:#06B6D4;"></pre></div>
+                    <div><strong>Payload</strong><pre id="pay" style="font-family:ui-monospace,monospace;font-size:12px;background:rgba(0,0,0,.25);padding:12px;border-radius:8px;white-space:pre-wrap;color:#A855F7;"></pre></div>
+                    <div><strong>Signature</strong><pre id="sig" style="font-family:ui-monospace,monospace;font-size:12px;background:rgba(0,0,0,.25);padding:12px;border-radius:8px;word-break:break-all;color:#EC4899;"></pre></div>
+                    <div id="meta" style="color:#9aa1b6;font-size:13px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Base64-URL-decodes each of the three parts and parses the JSON. The signature is shown but <strong>not verified</strong> — that requires the secret/key, which a browser-only tool can't safely handle. Never paste production secrets here.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        function b64urlDecode(s) {
+            s = s.replace(/-/g, "+").replace(/_/g, "/");
+            while (s.length % 4) s += "=";
+            return decodeURIComponent(escape(atob(s)));
+        }
+        $("runBtn").addEventListener("click", () => {
+            clearError();
+            const t = $("inp").value.trim();
+            const parts = t.split(".");
+            if (parts.length !== 3) { showError("A JWT has 3 dot-separated parts."); return; }
+            try {
+                const h = JSON.parse(b64urlDecode(parts[0]));
+                const p = JSON.parse(b64urlDecode(parts[1]));
+                $("head").textContent = JSON.stringify(h, null, 2);
+                $("pay").textContent  = JSON.stringify(p, null, 2);
+                $("sig").textContent  = parts[2];
+                const meta = [];
+                if (p.exp) meta.push("exp: " + new Date(p.exp * 1000).toLocaleString() + (p.exp * 1000 < Date.now() ? " ⚠ expired" : ""));
+                if (p.iat) meta.push("iat: " + new Date(p.iat * 1000).toLocaleString());
+                if (p.iss) meta.push("iss: " + p.iss);
+                $("meta").textContent = meta.join("  •  ");
+                $("resultBox").style.display = "flex";
+            } catch (e) { showError("Invalid JWT: " + e.message); }
+        });
+
+    })();
+    </script>
+</body>
+</html>

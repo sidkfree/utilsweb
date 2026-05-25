@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Image Rotator & Flipper — UtilsWeb</title>
+    <meta name="description" content="Rotate by any angle, flip horizontally / vertically. Lossless.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #8B5CF6, #EC4899);">🔃</div>
+                    <div>
+                        <h1>Image Rotator & Flipper</h1>
+                        <p class="tagline">Rotate by any angle, flip horizontally / vertically. Lossless.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Image</label>
+                    <input type="file" id="file" accept="image/*">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;">
+                        <div>
+                            <label>Rotate (°)</label>
+                            <input type="number" id="deg" value="90" step="1">
+                        </div>
+                        <div>
+                            <label>Output</label>
+                            <select id="fmt">
+                                <option value="image/png" selected>PNG (lossless)</option>
+                                <option value="image/jpeg">JPEG</option>
+                                <option value="image/webp">WebP</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+                        <button class="btn primary" data-op="rot">Rotate</button>
+                        <button class="btn primary" data-op="r90">↻ 90°</button>
+                        <button class="btn primary" data-op="l90">↺ 90°</button>
+                        <button class="btn primary" data-op="180">180°</button>
+                        <button class="btn primary" data-op="flipH">Flip H</button>
+                        <button class="btn primary" data-op="flipV">Flip V</button>
+                    </div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;align-items:center;">
+                    <img id="prev" style="max-width:100%;border-radius:8px;background:#000;">
+                    <a class="btn primary" id="dl" download="rotated.png">⬇ Download</a>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Rotation uses an off-screen canvas with a transform matrix. Output canvas size is enlarged to fit the rotated image without clipping.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        let img = null;
+        $("file").addEventListener("change", () => {
+            const f = $("file").files[0]; if (!f) return;
+            const r = new FileReader();
+            r.onload = () => { img = new Image(); img.onload = () => {}; img.src = r.result; };
+            r.readAsDataURL(f);
+        });
+        function run(op) {
+            clearError();
+            if (!img) return showError("Pick an image first.");
+            let angle = 0, sx = 1, sy = 1;
+            if (op === "rot") angle = parseFloat($("deg").value) || 0;
+            if (op === "r90") angle = 90;
+            if (op === "l90") angle = -90;
+            if (op === "180") angle = 180;
+            if (op === "flipH") sx = -1;
+            if (op === "flipV") sy = -1;
+            const rad = angle * Math.PI / 180;
+            const w = img.naturalWidth, h = img.naturalHeight;
+            const cw = Math.abs(w * Math.cos(rad)) + Math.abs(h * Math.sin(rad));
+            const ch = Math.abs(w * Math.sin(rad)) + Math.abs(h * Math.cos(rad));
+            const c = document.createElement("canvas");
+            c.width = Math.round(cw); c.height = Math.round(ch);
+            const ctx = c.getContext("2d");
+            ctx.translate(c.width / 2, c.height / 2);
+            ctx.rotate(rad);
+            ctx.scale(sx, sy);
+            ctx.drawImage(img, -w / 2, -h / 2);
+            const fmt = $("fmt").value;
+            c.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                $("prev").src = url; $("dl").href = url;
+                $("dl").download = "rotated." + (fmt === "image/png" ? "png" : fmt === "image/webp" ? "webp" : "jpg");
+                $("resultBox").style.display = "flex";
+            }, fmt, 0.92);
+        }
+        document.querySelectorAll("[data-op]").forEach(b => b.addEventListener("click", (e) => { e.preventDefault(); run(b.dataset.op); }));
+
+    })();
+    </script>
+</body>
+</html>

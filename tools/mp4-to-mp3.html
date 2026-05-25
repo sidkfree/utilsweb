@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>MP4 → MP3 — UtilsWeb</title>
+    <meta name="description" content="Extract the audio track from a video file (mp4, webm, mov, mkv).">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #EC4899, #F59E0B);">🎵</div>
+                    <div>
+                        <h1>MP4 → MP3</h1>
+                        <p class="tagline">Extract the audio track from a video file (mp4, webm, mov, mkv).</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Video</label>
+                    <input type="file" id="file" accept="video/*">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;">
+                        <div>
+                            <label>Bitrate</label>
+                            <select id="br">
+                                <option>128k</option>
+                                <option selected>192k</option>
+                                <option>256k</option>
+                                <option>320k</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn primary" id="runBtn" type="button" style="margin-top:14px;">Extract MP3</button>
+                    <div id="progress" style="margin-top:8px;color:#9aa1b6;font-size:13px;"></div>
+                </div>
+                <div id="resultBox" class="result-card" style="display:none;flex-direction:column;gap:10px;align-items:center;">
+                    <audio id="player" controls style="width:100%;"></audio>
+                    <a class="btn primary" id="dl" download="audio.mp3">⬇ Download MP3</a>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Uses <a href="https://github.com/ffmpegwasm/ffmpeg.wasm" target="_blank" rel="noopener">ffmpeg.wasm</a> — a WebAssembly build of FFmpeg that runs in your browser. First load is ~25 MB; subsequent runs are fast.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        let ffmpeg = null;
+        async function loadFfmpeg() {
+            if (ffmpeg) return ffmpeg;
+            if (typeof FFmpeg === "undefined") throw new Error("FFmpeg lib not loaded");
+            ffmpeg = FFmpeg.createFFmpeg({
+                log: false,
+                corePath: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js"
+            });
+            await ffmpeg.load();
+            return ffmpeg;
+        }
+
+        $("runBtn").addEventListener("click", async () => {
+            clearError();
+            const f = $("file").files[0]; if (!f) return showError("Pick a video.");
+            try {
+                $("progress").textContent = "Loading FFmpeg (first run ~25MB)...";
+                const ff = await loadFfmpeg();
+                ff.setProgress(({ ratio }) => { if (ratio > 0) $("progress").textContent = `Encoding... ${(ratio * 100).toFixed(0)}%`; });
+                const data = new Uint8Array(await f.arrayBuffer());
+                ff.FS("writeFile", "in.bin", data);
+                await ff.run("-i", "in.bin", "-vn", "-b:a", $("br").value, "out.mp3");
+                const out = ff.FS("readFile", "out.mp3");
+                const blob = new Blob([out.buffer], { type: "audio/mpeg" });
+                const url = URL.createObjectURL(blob);
+                $("player").src = url; $("dl").href = url;
+                $("dl").download = f.name.replace(/\.[^.]+$/, "") + ".mp3";
+                $("progress").textContent = "Done.";
+                $("resultBox").style.display = "flex";
+            } catch (e) { showError(e.message || String(e)); }
+        });
+
+    })();
+    </script>
+</body>
+</html>

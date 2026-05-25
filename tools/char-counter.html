@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Length Checker — UtilsWeb</title>
+    <meta name="description" content="Check character limits for Twitter, SMS, SEO titles, meta descriptions.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9522163237779845" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="mesh"><div class="blob blob-cyan"></div><div class="blob blob-violet"></div><div class="blob blob-pink"></div><div class="grid-overlay"></div></div>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="/"><span class="brand-logo">⚙︎</span><span class="brand-name">UtilsWeb</span></a>
+            <nav><a href="/">Tools</a><a href="https://utilsweb.net" class="cta">utilsweb.net</a></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-page">
+            <div class="wrap">
+                <a class="back" href="/">← All tools</a>
+                <div class="tool-header">
+                    <div class="tool-icon big" style="background: linear-gradient(135deg, #D946EF, #3B82F6);">📏</div>
+                    <div>
+                        <h1>Length Checker</h1>
+                        <p class="tagline">Check character limits for Twitter, SMS, SEO titles, meta descriptions.</p>
+                    </div>
+                </div>
+
+
+                <div class="tool-form">
+                    <label>Text</label>
+                    <textarea id="txt" rows="8" placeholder="Type or paste here..."></textarea>
+                </div>
+                <div id="resultBox" class="result-card" style="display:block;flex-direction:column;gap:10px;">
+                    <div id="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;"></div>
+                </div>
+
+
+                <div id="errorBox" class="error-card" style="display:none;"></div>
+
+                <section class="tool-desc">
+                    <h3>How it works</h3>
+
+                    <p>Lengths are computed live in your browser. Numbers reflect publicly documented limits — emoji count as 2 on most platforms; this tool counts every Unicode code unit equally.</p>
+
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap"><p>🔒 100% client-side — nothing ever leaves your browser.</p></div>
+    </footer>
+
+    <script>
+    (function () {
+        const $ = (id) => document.getElementById(id);
+        function showError(msg) {
+            const eb = $("errorBox");
+            eb.textContent = "⚠ " + msg;
+            eb.style.display = "block";
+        }
+        function clearError() { const eb = $("errorBox"); eb.style.display = "none"; eb.textContent = ""; }
+
+        const LIMITS = [
+            { name: "Twitter / X",        limit: 280 },
+            { name: "SMS (single)",       limit: 160 },
+            { name: "SEO title",          limit: 60  },
+            { name: "SEO meta desc",      limit: 160 },
+            { name: "Facebook post",      limit: 63206 },
+            { name: "Instagram caption",  limit: 2200 },
+            { name: "LinkedIn post",      limit: 3000 },
+            { name: "YouTube title",      limit: 100 },
+            { name: "YouTube description",limit: 5000 },
+            { name: "App Store name",     limit: 30 },
+            { name: "App Store subtitle", limit: 30 },
+            { name: "Google Ad headline", limit: 30 },
+        ];
+        const grid = $("grid");
+        function paint() {
+            const n = $("txt").value.length;
+            grid.innerHTML = LIMITS.map(l => {
+                const pct = Math.min(100, (n / l.limit) * 100);
+                const over = n > l.limit;
+                const color = over ? "#EF4444" : pct > 80 ? "#F59E0B" : "#22C55E";
+                return `<div style="padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:10px;">
+                    <div style="display:flex;justify-content:space-between;font-size:13px;color:#9aa1b6;"><span>${l.name}</span><span style="color:${color};">${n} / ${l.limit}</span></div>
+                    <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;margin-top:6px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${color};"></div></div>
+                </div>`;
+            }).join("");
+        }
+        $("txt").addEventListener("input", paint);
+        paint();
+
+    })();
+    </script>
+</body>
+</html>
